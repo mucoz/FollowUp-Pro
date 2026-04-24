@@ -41,7 +41,7 @@ exit /b 1
 :found
 :: BAT dosyasının bulunduğu klasörü al
 set "APP_DIR=%~dp0"
-set "HTML_FILE=%APP_DIR%index.html"
+set "HTML_FILE=%APP_DIR%src/index.html"
 
 :: HTML dosyasının varlığını kontrol et
 if not exist "%HTML_FILE%" (
