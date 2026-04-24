@@ -203,8 +203,23 @@ function updateXPDisplay() {
 
 // Modal Yönetimi
 function openModal(modalId) {
-    document.getElementById(modalId).classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        
+        // İlk input'u bul ve focusla
+        setTimeout(() => {
+            const firstInput = modal.querySelector('input:not([type="hidden"]), textarea, button:not(.close-modal)');
+            if (firstInput && firstInput.focus) {
+                firstInput.focus();
+                // Input tipine göre seçim yap
+                if (firstInput.tagName === 'INPUT' || firstInput.tagName === 'TEXTAREA') {
+                    firstInput.select();
+                }
+            }
+        }, 150);
+    }
 }
 
 function closeModal(modalId) {
@@ -639,6 +654,305 @@ function escapeHtml(str) {
     });
 }
 
+// =============== MODAL KEYBOARD NAVIGATION ===============
+
+// Modal açıldığında ilk input'a focus ver
+function setupModalFocus(modalId, firstInputId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    // Modal her açıldığında
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                if (!modal.classList.contains('hidden')) {
+                    const firstInput = document.getElementById(firstInputId);
+                    if (firstInput) {
+                        setTimeout(() => firstInput.focus(), 100);
+                    }
+                }
+            }
+        });
+    });
+    
+    observer.observe(modal, { attributes: true });
+}
+
+// Modal içinde Enter tuşu ile submit
+function setupEnterSubmit(modalId, buttonId, ...inputIds) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const inputs = inputIds.map(id => document.getElementById(id)).filter(el => el);
+    
+    inputs.forEach(input => {
+        if (input) {
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const button = document.getElementById(buttonId);
+                    if (button) button.click();
+                }
+            });
+        }
+    });
+}
+
+// Tab sırasını düzenle (isteğe bağlı)
+function setupTabOrder(modalId, inputIds) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+    
+    const inputs = inputIds.map(id => document.getElementById(id)).filter(el => el);
+    
+    // Tab index'leri ayarla
+    inputs.forEach((input, index) => {
+        if (input) input.tabIndex = index + 1;
+    });
+    
+    // Son input'ta Enter tuşu ile submit
+    const lastInput = inputs[inputs.length - 1];
+    if (lastInput) {
+        lastInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const saveBtn = modal.querySelector('button[id*="save"], button[id*="Save"]');
+                if (saveBtn) saveBtn.click();
+            }
+        });
+    }
+}
+
+// =============== MEVCUT MODAL'LARI GÜNCELLE ===============
+
+// New Topic Modal için focus ve enter desteği
+function initNewTopicModal() {
+    const modal = document.getElementById('topicModal');
+    const titleInput = document.getElementById('topicTitle');
+    const descInput = document.getElementById('topicDesc');
+    const saveBtn = document.getElementById('saveTopicBtn');
+    
+    if (!modal || !titleInput) return;
+    
+    // Modal açılınca focus
+    const observer = new MutationObserver(() => {
+        if (!modal.classList.contains('hidden')) {
+            setTimeout(() => titleInput.focus(), 100);
+        }
+    });
+    observer.observe(modal, { attributes: true });
+    
+    // Enter ile submit
+    titleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (descInput) descInput.focus();
+        }
+    });
+    
+    if (descInput) {
+        descInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (saveBtn) saveBtn.click();
+            }
+        });
+    }
+}
+
+// New Entry Modal için focus ve enter desteği
+function initNewEntryModal() {
+    const modal = document.getElementById('entryModal');
+    const titleInput = document.getElementById('entryTitle');
+    const questionInput = document.getElementById('entryQuestion');
+    const saveBtn = document.getElementById('saveEntryBtn');
+    
+    if (!modal || !titleInput) return;
+    
+    // Modal açılınca focus
+    const observer = new MutationObserver(() => {
+        if (!modal.classList.contains('hidden')) {
+            setTimeout(() => titleInput.focus(), 100);
+        }
+    });
+    observer.observe(modal, { attributes: true });
+    
+    // Enter ile navigation
+    titleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (questionInput) questionInput.focus();
+        }
+    });
+    
+    if (questionInput) {
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (saveBtn) saveBtn.click();
+            }
+        });
+    }
+}
+
+// Edit Topic Modal
+function initEditTopicModal() {
+    const modal = document.getElementById('editTopicModal');
+    const titleInput = document.getElementById('editTopicTitle');
+    const saveBtn = document.getElementById('saveEditTopicBtn');
+    
+    if (!modal || !titleInput) return;
+    
+    const observer = new MutationObserver(() => {
+        if (!modal.classList.contains('hidden')) {
+            setTimeout(() => {
+                titleInput.focus();
+                titleInput.select(); // Mevcut metni seç
+            }, 100);
+        }
+    });
+    observer.observe(modal, { attributes: true });
+    
+    titleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (saveBtn) saveBtn.click();
+        }
+    });
+}
+
+// Edit Entry Modal
+function initEditEntryModal() {
+    const modal = document.getElementById('editEntryModal');
+    const titleInput = document.getElementById('editEntryTitle');
+    const questionInput = document.getElementById('editEntryQuestion');
+    const saveBtn = document.getElementById('saveEditEntryBtn');
+    
+    if (!modal || !titleInput) return;
+    
+    const observer = new MutationObserver(() => {
+        if (!modal.classList.contains('hidden')) {
+            setTimeout(() => {
+                titleInput.focus();
+                titleInput.select();
+            }, 100);
+        }
+    });
+    observer.observe(modal, { attributes: true });
+    
+    titleInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (questionInput) questionInput.focus();
+        }
+    });
+    
+    if (questionInput) {
+        questionInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (saveBtn) saveBtn.click();
+            }
+        });
+    }
+}
+
+// Confirm Modal (Escape ile kapatma)
+function initConfirmModal() {
+    const modal = document.getElementById('confirmModal');
+    if (!modal) return;
+    
+    document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('hidden')) {
+            if (e.key === 'Escape') {
+                closeModal('confirmModal');
+            } else if (e.key === 'Enter') {
+                const confirmBtn = document.getElementById('confirmDeleteBtn');
+                if (confirmBtn) confirmBtn.click();
+            }
+        }
+    });
+}
+
+// =============== GENEL ESCAPE DESTEĞİ ===============
+function initGlobalEscape() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            // Tüm açık modalları kapat
+            const openModals = document.querySelectorAll('.modal:not(.hidden)');
+            openModals.forEach(modal => {
+                closeModal(modal.id);
+            });
+        }
+    });
+}
+
+// =============== TÜM MODALLARI BAŞLAT ===============
+function initAllModals() {
+    initNewTopicModal();
+    initNewEntryModal();
+    initEditTopicModal();
+    initEditEntryModal();
+    initConfirmModal();
+    initGlobalEscape();
+    
+    // Ayrıca close-modal butonları için Enter desteği
+    document.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const modal = btn.closest('.modal');
+                if (modal) closeModal(modal.id);
+            }
+        });
+    });
+}
+
+// =============== OPSİYONEL: GELİŞMİŞ FOCUS HIGHLIGHT ===============
+function addFocusStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Focus highlight for better visibility */
+        input:focus, textarea:focus, button:focus {
+            outline: none;
+            ring: 2px solid #3B82F6;
+            ring-offset: 2px;
+        }
+        
+        /* Smooth focus transition */
+        input, textarea, button {
+            transition: all 0.2s ease;
+        }
+        
+        /* Modal içindeki ilk input için hafif animasyon */
+        .modal:not(.hidden) input:first-of-type {
+            animation: gentlePulse 0.5s ease-out;
+        }
+        
+        @keyframes gentlePulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+            }
+            50% {
+                transform: scale(1.02);
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+            }
+        }
+        
+        /* Tab navigation highlight */
+        *:focus-visible {
+            outline: 2px solid #3B82F6;
+            outline-offset: 2px;
+            border-radius: 8px;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
 // =============== INITIALIZATION ===============
 document.addEventListener('DOMContentLoaded', () => {
     loadFromLocal();
@@ -746,4 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.target === modal) closeModal(modal.id);
         });
     });
+
+    initAllModals();
+    addFocusStyles();
 });
