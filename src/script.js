@@ -289,8 +289,8 @@ function renderTopics() {
         container.innerHTML = `
             <div class="ios-card bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
                 <i class="fas ${currentTab === 'active' ? 'fa-lightbulb' : 'fa-check-circle'} text-4xl text-white/30 mb-2"></i>
-                <h3 class="text-base font-semibold text-white mb-1">${currentTab === 'active' ? 'Henüz aktif konu yok' : 'Tamamlanmış konu yok'}</h3>
-                <p class="text-white/60 text-xs">${currentTab === 'active' ? '"New Topic" butonuna tıklayarak başlayın!' : 'Tamamladığınız konular burada görünecek'}</p>
+                <h3 class="text-base font-semibold text-white mb-1">${currentTab === 'active' ? 'There are not active topics yet' : 'There are no completed topics yet'}</h3>
+                <p class="text-white/60 text-xs">${currentTab === 'active' ? 'Start by clicking the "New Topic" button!' : 'The topics you have completed will appear here'}</p>
             </div>
         `;
         return;
