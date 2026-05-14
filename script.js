@@ -578,10 +578,10 @@ function reactivateTopic(topicId) {
         
         // Switch to active tab
         currentTab = 'active';
-        document.getElementById('activeTabBtn').classList.add('bg-blue-500', 'text-white');
-        document.getElementById('activeTabBtn').classList.remove('bg-white/10', 'text-white/70');
-        document.getElementById('completedTabBtn').classList.remove('bg-blue-500', 'text-white');
-        document.getElementById('completedTabBtn').classList.add('bg-white/10', 'text-white/70');
+        document.getElementById('activeTabBtn').classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+        document.getElementById('activeTabBtn').classList.remove('text-white/70');
+        document.getElementById('completedTabBtn').classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+        document.getElementById('completedTabBtn').classList.add('text-white/70');
         renderTopics();
     }
 }
@@ -1189,19 +1189,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Tab switching
     document.getElementById('activeTabBtn').addEventListener('click', () => {
         currentTab = 'active';
-        document.getElementById('activeTabBtn').classList.add('bg-blue-500', 'text-white');
-        document.getElementById('activeTabBtn').classList.remove('bg-white/10', 'text-white/70');
-        document.getElementById('completedTabBtn').classList.remove('bg-blue-500', 'text-white');
-        document.getElementById('completedTabBtn').classList.add('bg-white/10', 'text-white/70');
-        renderTopics();
-    });
-    
-    document.getElementById('completedTabBtn').addEventListener('click', () => {
-        currentTab = 'completed';
-        document.getElementById('completedTabBtn').classList.add('bg-blue-500', 'text-white');
-        document.getElementById('completedTabBtn').classList.remove('bg-white/10', 'text-white/70');
-        document.getElementById('activeTabBtn').classList.remove('bg-blue-500', 'text-white');
-        document.getElementById('activeTabBtn').classList.add('bg-white/10', 'text-white/70');
+document.getElementById('activeTabBtn').classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                document.getElementById('activeTabBtn').classList.remove('text-white/70');
+                document.getElementById('completedTabBtn').classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+                document.getElementById('completedTabBtn').classList.add('text-white/70');
+                renderTopics();
+            });
+            
+            document.getElementById('completedTabBtn').addEventListener('click', () => {
+                currentTab = 'completed';
+                document.getElementById('completedTabBtn').classList.add('bg-white', 'text-gray-800', 'shadow-sm');
+                document.getElementById('completedTabBtn').classList.remove('text-white/70');
+                document.getElementById('activeTabBtn').classList.remove('bg-white', 'text-gray-800', 'shadow-sm');
+                document.getElementById('activeTabBtn').classList.add('text-white/70');
         renderTopics();
     });
     
