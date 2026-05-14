@@ -281,12 +281,37 @@ function closeModal(modalId) {
 }
 
 // Entry Render (Recursive) - Daha kompakt
-function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly = false) {
+function hashCode(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    return hash;
+}
+
+function entryBgStyle(level, hue) {
+    const l = 82 + level * 3;
+    const s = Math.max(50 - level * 6, 20);
+    return `background-color: hsla(${hue}, ${s}%, ${Math.min(l, 97)}%, 0.85)`;
+}
+
+function entryHue(id) {
+    let hue = Math.abs(hashCode(id)) % 360;
+    if (hue < 30 || hue > 330) hue = (hue + 60) % 360;
+    return hue;
+}
+
+function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly = false, hue = null) {
     if (!entries || entries.length === 0) return '';
     
-    return entries.map(entry => `
+    return entries.map(entry => {
+        const entryHueValue = hue !== null ? hue : entryHue(entry.id);
+        const bgStyle = entryBgStyle(level, entryHueValue);
+        
+        return `
         <div class="entry-item ml-${Math.min(level * 3, 8)} relative pl-3 py-1">
-            <div class="bg-white/80 backdrop-blur rounded-lg p-2 mb-1 shadow-sm">
+            <div class="backdrop-blur rounded-lg p-2 mb-1 shadow-sm" style="${bgStyle}">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         <h4 class="text-gray-800 text-xs">${escapeHtml(entry.title)}</h4>
@@ -312,9 +337,9 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
                     </button>
                 ` : ''}
             </div>
-            ${entry.children && entry.children.length > 0 ? renderEntries(entry.children, level + 1, topicId, entry.id, isReadOnly) : ''}
+            ${entry.children && entry.children.length > 0 ? renderEntries(entry.children, level + 1, topicId, entry.id, isReadOnly, entryHueValue) : ''}
         </div>
-    `).join('');
+    `; }).join('');
 }
 
 // Topic Render
