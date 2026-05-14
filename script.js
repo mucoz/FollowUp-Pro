@@ -421,7 +421,7 @@ function renderTopics() {
                             </span>
                             ${currentTab === 'active' ? `
                                 <span class="px-1.5 py-0.5 bg-purple-500/30 text-purple-200 rounded-full text-[10px]">
-                                    🏆 ${Math.floor(FollowUpAlgorithm.calculateRank(topic))} puan
+                                    🏆 ${Math.floor(FollowUpAlgorithm.calculateRank(topic))} pts
                                 </span>
                             ` : `
                                 <span class="px-1.5 py-0.5 bg-green-500/30 text-green-200 rounded-full text-[10px]">
