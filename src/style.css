@@ -130,35 +130,70 @@ body {
     transition: all 0.2s ease;
 }
 
-/* Konfeti patlaması efekti - Geliştirildi */
-@keyframes confettiFall {
-    0% {
-        transform: translateY(-10px) rotate(0deg);
-        opacity: 1;
-    }
-    100% {
-        transform: translateY(100vh) rotate(720deg);
-        opacity: 0;
-    }
+/* Progress Bar Spin Glow */
+@property --mask {
+    syntax: "<angle>";
+    inherits: false;
+    initial-value: 0deg;
 }
 
-@keyframes firework {
-    0% {
-        transform: scale(0);
-        opacity: 1;
-    }
-    100% {
-        transform: scale(4);
-        opacity: 0;
-    }
+.progress-glow {
+    position: relative;
+    border-radius: 999px;
 }
 
-.firework {
+.progress-glow .shimmer {
     position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    animation: firework 1s ease-out forwards;
+    inset: -2px;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 5;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    mask-image: conic-gradient(
+        from var(--mask, 0deg),
+        transparent 0%,
+        transparent 10%,
+        black 36%,
+        black 45%,
+        transparent 50%,
+        transparent 60%,
+        black 85%,
+        black 95%,
+        transparent 100%
+    );
+    mask-size: cover;
+}
+
+.progress-glow:hover .shimmer {
+    opacity: 1;
+    animation: spin-glow 3s linear infinite;
+}
+
+.progress-glow .shimmer::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    box-shadow:
+        0 0 2px 1px hsl(213, 86%, 65%),
+        0 0 4px 2px hsl(248, 91%, 56%),
+        0 0 8px 4px hsl(318, 86%, 58%);
+}
+
+.progress-glow .shimmer::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    box-shadow:
+        inset 0 0 0 0.5px hsl(270, 17%, 93%),
+        inset 0 0 2px 0.5px hsl(309, 100%, 62%);
+}
+
+@keyframes spin-glow {
+    from { --mask: 0deg; }
+    to { --mask: 360deg; }
 }
 
 /* Responsive düzenlemeler */

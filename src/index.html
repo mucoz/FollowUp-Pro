@@ -49,6 +49,12 @@
                         <div class="text-white/60 text-[10px]">📊 Level</div>
                         <div class="text-white text-base font-bold" id="level">1</div>
                     </div>
+                    <button id="exportBtn" class="ios-button bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-2.5 py-2 rounded-xl transition-all text-[11px] font-semibold flex items-center gap-1" title="Export Backup">
+                        <i class="fas fa-download text-xs"></i> Export
+                    </button>
+                    <button id="importBtn" class="ios-button bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-2.5 py-2 rounded-xl transition-all text-[11px] font-semibold flex items-center gap-1" title="Import Backup">
+                        <i class="fas fa-upload text-xs"></i> Import
+                    </button>
                     <button id="newTopicBtn" class="ios-button bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-1 shadow-lg hover:shadow-xl transition-all text-sm">
                         <i class="fas fa-plus-circle text-xs"></i>
                         New Topic
@@ -62,8 +68,11 @@
                     <span>Level Progress</span>
                     <span id="xpProgressText">0/1000 XP</span>
                 </div>
-                <div class="h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div id="xpProgressBar" class="h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                <div class="progress-glow h-1.5 rounded-full">
+                    <div class="h-full bg-white/20 rounded-full overflow-hidden relative">
+                        <div id="xpProgressBar" class="h-full bg-gradient-to-r from-blue-400 to-purple-500 rounded-full transition-all duration-500 relative" style="width: 0%"></div>
+                    </div>
+                    <span class="shimmer"></span>
                 </div>
             </div>
         </div>
@@ -78,6 +87,15 @@
             </button>
         </div>
         
+        <!-- Search Bar -->
+        <div class="relative mb-4">
+            <input type="text" id="searchInput" placeholder="Search entries..." class="w-full px-4 py-2.5 pl-10 bg-white/10 backdrop-blur border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:border-blue-500 transition-colors text-sm">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-white/40 text-sm"></i>
+            <button id="searchClearBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/80 transition-colors hidden">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
         <!-- Topic Listesi -->
         <div id="topicsContainer" class="space-y-3"></div>
     </div>
@@ -86,14 +104,14 @@
     <div id="topicModal" class="modal hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="ios-card bg-white rounded-2xl max-w-md w-full p-5 transform transition-all">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold text-gray-800">Yeni Konu</h2>
+                <h2 class="text-xl font-bold text-gray-800">New Topic</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="topicTitle" placeholder="Konu başlığı..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm">
-            <textarea id="topicDesc" placeholder="Açıklama (opsiyonel)..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
+            <input type="text" id="topicTitle" placeholder="Topic title..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm">
+            <textarea id="topicDesc" placeholder="Description (optional)..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
             <div class="flex gap-2">
-                <button id="saveTopicBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Oluştur</button>
-                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">İptal</button>
+                <button id="saveTopicBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Create</button>
+                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
             </div>
         </div>
     </div>
@@ -102,14 +120,14 @@
     <div id="entryModal" class="modal hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="ios-card bg-white rounded-2xl max-w-md w-full p-5">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold text-gray-800">Yeni Entry</h2>
+                <h2 class="text-xl font-bold text-gray-800" id="entryModalTitle">New Entry</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="entryTitle" placeholder="Başlık / Kısa açıklama..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
-            <textarea id="entryQuestion" placeholder="Soru / Detay..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
+            <input type="text" id="entryTitle" placeholder="Title / Short description..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
+            <textarea id="entryQuestion" placeholder="Question / Detail..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
             <div class="flex gap-2">
-                <button id="saveEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Ekle</button>
-                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">İptal</button>
+                <button id="saveEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Add</button>
+                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
             </div>
             <input type="hidden" id="currentTopicId">
             <input type="hidden" id="currentParentId">
@@ -123,12 +141,12 @@
                 <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
                     <i class="fas fa-trash-alt text-red-500 text-xl"></i>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-1">Emin misiniz?</h3>
-                <p class="text-gray-600 text-sm" id="confirmMessage">Bu öğe silinecek ve altındaki entry'ler bir üst seviyeye bağlanacak.</p>
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Are you sure?</h3>
+                <p class="text-gray-600 text-sm" id="confirmMessage">This item will be deleted and its child entries will be moved up one level.</p>
             </div>
             <div class="flex gap-2">
-                <button id="confirmDeleteBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold text-sm">Sil</button>
-                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">İptal</button>
+                <button id="confirmDeleteBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg font-semibold text-sm">Delete</button>
+                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
             </div>
         </div>
     </div>
@@ -137,13 +155,13 @@
     <div id="editTopicModal" class="modal hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="ios-card bg-white rounded-2xl max-w-md w-full p-5">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold text-gray-800">Konuyu Düzenle</h2>
+                <h2 class="text-xl font-bold text-gray-800">Edit Topic</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="editTopicTitle" placeholder="Yeni başlık..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm">
+            <input type="text" id="editTopicTitle" placeholder="New title..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm">
             <div class="flex gap-2">
-                <button id="saveEditTopicBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Kaydet</button>
-                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">İptal</button>
+                <button id="saveEditTopicBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Save</button>
+                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
             </div>
             <input type="hidden" id="editTopicId">
         </div>
@@ -153,14 +171,14 @@
     <div id="editEntryModal" class="modal hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div class="ios-card bg-white rounded-2xl max-w-md w-full p-5">
             <div class="flex justify-between items-center mb-3">
-                <h2 class="text-xl font-bold text-gray-800">Entry'yi Düzenle</h2>
+                <h2 class="text-xl font-bold text-gray-800">Edit Entry</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="editEntryTitle" placeholder="Başlık..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
-            <textarea id="editEntryQuestion" placeholder="Soru..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
+            <input type="text" id="editEntryTitle" placeholder="Title..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
+            <textarea id="editEntryQuestion" placeholder="Question..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
             <div class="flex gap-2">
-                <button id="saveEditEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Kaydet</button>
-                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">İptal</button>
+                <button id="saveEditEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Save</button>
+                <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
             </div>
             <input type="hidden" id="editEntryTopicId">
             <input type="hidden" id="editEntryId">
@@ -168,9 +186,23 @@
         </div>
     </div>
     
-    <!-- Konfeti Canvas -->
-    <canvas id="confettiCanvas" class="fixed inset-0 pointer-events-none z-[100] hidden"></canvas>
-    
+    <!-- Import Error Modal -->
+    <div id="importErrorModal" class="modal hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="ios-card bg-white rounded-2xl max-w-sm w-full p-5">
+            <div class="text-center mb-3">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                    <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1">Invalid File</h3>
+                <p class="text-gray-600 text-sm" id="importErrorMessage">The selected file is not a valid FollowUp Pro backup file.</p>
+            </div>
+            <button class="close-modal w-full bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">OK</button>
+        </div>
+    </div>
+
+    <input type="file" id="importFileInput" accept=".txt" class="hidden">
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.4/dist/confetti.browser.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

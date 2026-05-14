@@ -4,6 +4,7 @@ let nextId = 1;
 let deleteTarget = { type: null, id: null, topicId: null, parentId: null };
 let currentEditTopic = null;
 let currentTab = 'active'; // 'active' or 'completed'
+let searchQuery = '';
 
 // XP ve Level Sistemi
 let userXP = 0;
@@ -67,7 +68,7 @@ class XPSystem {
         updateXPDisplay();
         
         if (userLevel > oldLevel) {
-            await showAdvancedCelebration();
+            showSchoolPrideConfetti();
             showNotification(`🎉 LEVEL UP! Level ${userLevel} 🎉`, 'levelup');
         }
         
@@ -75,7 +76,6 @@ class XPSystem {
             if (Math.random() < 0.3) {
                 userXP += 25;
                 showNotification('⚡ CRITICAL! +25 Bonus XP!', 'bonus');
-                await showConfetti(3);
             }
         }
         
@@ -95,27 +95,78 @@ class XPSystem {
     }
 }
 
-// Gelişmiş Kutlama Efektleri
+// Confetti Effects using canvas-confetti
+const confettiColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFD700', '#FF1493'];
+
+async function showConfetti(count = 3) {
+    const defaults = { origin: { y: 0.7 }, colors: confettiColors };
+
+    function fire(particleRatio, opts) {
+        confetti({
+            ...defaults,
+            ...opts,
+            particleCount: Math.floor(200 * particleRatio)
+        });
+    }
+
+    fire(0.25, { spread: 26, startVelocity: 55 });
+    fire(0.2, { spread: 60 });
+    fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
+    fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
+    fire(0.1, { spread: 120, startVelocity: 45 });
+}
+
 async function showAdvancedCelebration() {
-    // Çoklu konfeti dalgası
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => showConfetti(8), i * 200);
+    const colors = confettiColors;
+    const count = 400;
+
+    function fire(particleRatio, opts) {
+        confetti({
+            ...opts,
+            particleCount: Math.floor(count * particleRatio),
+            colors
+        });
     }
-    
-    // Havai fişek efekti
-    for (let i = 0; i < 30; i++) {
+
+    function realisticBurst(origin) {
+        fire(0.25, { spread: 26, startVelocity: 55, origin });
+        fire(0.2, { spread: 60, origin });
+        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8, origin });
+        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2, origin });
+        fire(0.1, { spread: 120, startVelocity: 45, origin });
+    }
+
+    // Center burst
+    realisticBurst({ y: 0.6 });
+
+    // Side bursts with delay
+    setTimeout(() => realisticBurst({ x: 0.2, y: 0.7 }), 150);
+    setTimeout(() => realisticBurst({ x: 0.8, y: 0.7 }), 300);
+    setTimeout(() => realisticBurst({ y: 0.5 }), 450);
+
+    // Fireworks from both sides
+    for (let i = 0; i < 6; i++) {
         setTimeout(() => {
-            const firework = document.createElement('div');
-            firework.className = 'firework';
-            firework.style.left = Math.random() * window.innerWidth + 'px';
-            firework.style.top = Math.random() * window.innerHeight * 0.5 + 'px';
-            firework.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
-            document.body.appendChild(firework);
-            setTimeout(() => firework.remove(), 1000);
-        }, i * 100);
+            confetti({
+                particleCount: 100,
+                startVelocity: 40,
+                spread: 360,
+                ticks: 80,
+                origin: { x: 0.15, y: Math.random() * 0.5 },
+                colors
+            });
+            confetti({
+                particleCount: 100,
+                startVelocity: 40,
+                spread: 360,
+                ticks: 80,
+                origin: { x: 0.85, y: Math.random() * 0.5 },
+                colors
+            });
+        }, i * 250 + 600);
     }
-    
-    // Ekran flaşı
+
+    // Screen flash
     const flash = document.createElement('div');
     flash.style.position = 'fixed';
     flash.style.top = 0;
@@ -129,31 +180,30 @@ async function showAdvancedCelebration() {
     setTimeout(() => flash.remove(), 300);
 }
 
-async function showConfetti(waveCount = 3) {
-    const canvas = document.getElementById('confettiCanvas');
-    canvas.classList.remove('hidden');
-    
-    for (let w = 0; w < waveCount; w++) {
-        setTimeout(() => {
-            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFD700', '#FF1493'];
-            for (let i = 0; i < 80; i++) {
-                const piece = document.createElement('div');
-                piece.className = 'confetti-piece';
-                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                piece.style.left = Math.random() * window.innerWidth + 'px';
-                piece.style.top = '-10px';
-                piece.style.width = Math.random() * 8 + 4 + 'px';
-                piece.style.height = Math.random() * 8 + 4 + 'px';
-                piece.style.animationDuration = Math.random() * 2 + 1 + 's';
-                piece.style.animationDelay = Math.random() * 0.5 + 's';
-                canvas.appendChild(piece);
-                
-                setTimeout(() => piece.remove(), 3000);
-            }
-        }, w * 200);
-    }
-    
-    setTimeout(() => canvas.classList.add('hidden'), 3000);
+function showSchoolPrideConfetti(duration = 2000) {
+    const end = Date.now() + duration;
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#FFD700', '#FF1493'];
+
+    (function frame() {
+        confetti({
+            particleCount: 8,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors
+        });
+        confetti({
+            particleCount: 8,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    }());
 }
 
 function showNotification(message, type = 'info') {
@@ -242,7 +292,7 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
                         <h4 class="text-gray-800 text-xs">${escapeHtml(entry.title)}</h4>
                         <p class="font-semibold text-red-600 text-xs mt-0.5">${escapeHtml(entry.question)}</p>
                         <div class="text-[10px] text-gray-400 mt-1">
-                            <i class="far fa-clock"></i> ${new Date(entry.createdAt).toLocaleDateString('tr-TR')}
+                            <i class="far fa-clock"></i> ${new Date(entry.createdAt).toLocaleDateString()} ${new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                         </div>
                     </div>
                     ${!isReadOnly ? `
@@ -268,10 +318,37 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
 }
 
 // Topic Render
+function topicMatchesSearch(topic, query) {
+    if (!query) return true;
+    const lowerQuery = query.toLowerCase();
+
+    if (topic.title.toLowerCase().includes(lowerQuery)) return true;
+    if (topic.description && topic.description.toLowerCase().includes(lowerQuery)) return true;
+
+    function entryMatches(entries) {
+        for (const entry of entries) {
+            if (entry.title.toLowerCase().includes(lowerQuery) ||
+                entry.question.toLowerCase().includes(lowerQuery)) {
+                return true;
+            }
+            if (entry.children && entryMatches(entry.children)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    return entryMatches(topic.entries);
+}
+
 function renderTopics() {
     let filteredTopics = currentTab === 'active' 
         ? topics.filter(t => !t.completed)
         : topics.filter(t => t.completed);
+    
+    if (searchQuery) {
+        filteredTopics = filteredTopics.filter(t => topicMatchesSearch(t, searchQuery));
+    }
     
     const rankedTopics = [...filteredTopics].sort((a, b) => {
         if (currentTab === 'active') {
@@ -286,13 +363,23 @@ function renderTopics() {
     const isReadOnly = currentTab === 'completed';
     
     if (rankedTopics.length === 0) {
-        container.innerHTML = `
-            <div class="ios-card bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
-                <i class="fas ${currentTab === 'active' ? 'fa-lightbulb' : 'fa-check-circle'} text-4xl text-white/30 mb-2"></i>
-                <h3 class="text-base font-semibold text-white mb-1">${currentTab === 'active' ? 'There are not active topics yet' : 'There are no completed topics yet'}</h3>
-                <p class="text-white/60 text-xs">${currentTab === 'active' ? 'Start by clicking the "New Topic" button!' : 'The topics you have completed will appear here'}</p>
-            </div>
-        `;
+        if (searchQuery) {
+            container.innerHTML = `
+                <div class="ios-card bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
+                    <i class="fas fa-search-minus text-4xl text-white/30 mb-2"></i>
+                    <h3 class="text-base font-semibold text-white mb-1">No results found</h3>
+                    <p class="text-white/60 text-xs">No entries match "${escapeHtml(searchQuery)}"</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = `
+                <div class="ios-card bg-white/10 backdrop-blur rounded-2xl p-8 text-center">
+                    <i class="fas ${currentTab === 'active' ? 'fa-lightbulb' : 'fa-check-circle'} text-4xl text-white/30 mb-2"></i>
+                    <h3 class="text-base font-semibold text-white mb-1">${currentTab === 'active' ? 'There are not active topics yet' : 'There are no completed topics yet'}</h3>
+                    <p class="text-white/60 text-xs">${currentTab === 'active' ? 'Start by clicking the "New Topic" button!' : 'The topics you have completed will appear here'}</p>
+                </div>
+            `;
+        }
         return;
     }
     
@@ -313,7 +400,7 @@ function renderTopics() {
                                 </span>
                             ` : `
                                 <span class="px-1.5 py-0.5 bg-green-500/30 text-green-200 rounded-full text-[10px]">
-                                    ✅ ${new Date(topic.completedAt).toLocaleDateString('tr-TR')}
+                                    ✅ ${new Date(topic.completedAt).toLocaleDateString()}
                                 </span>
                             `}
                         </div>
@@ -336,10 +423,10 @@ function renderTopics() {
             <!-- Topic Content (Expandable) - Daha kompakt -->
             <div id="topic-${topic.id}" class="hidden px-3 pb-3">
                 ${topic.entries && topic.entries.length > 0 ? renderEntries(topic.entries, 0, topic.id, null, isReadOnly) : `
-                    <div class="text-center py-4 text-white/50 text-sm">
-                        <i class="fas fa-comment-dots text-2xl mb-1"></i>
-                        <p class="text-xs">Henüz entry yok</p>
-                    </div>
+<div class="text-center py-4 text-white/50 text-sm">
+                            <i class="fas fa-comment-dots text-2xl mb-1"></i>
+                            <p class="text-xs">No entries yet</p>
+                        </div>
                 `}
                 
                 ${!isReadOnly ? `
@@ -352,6 +439,10 @@ function renderTopics() {
                         <i class="fas fa-check-circle text-xs"></i>
                         Complete Topic (+100 XP)
                     </button>
+                ` : topic.reactivateUsed ? `
+                    <div class="mt-2 w-full bg-white/5 rounded-lg px-3 py-2.5 text-center">
+                        <p class="text-white/50 text-xs">This topic can no longer be reactivated. Create a new topic instead.</p>
+                    </div>
                 ` : `
                     <button onclick="reactivateTopic('${topic.id}')" class="mt-2 w-full bg-yellow-500/80 hover:bg-yellow-500 text-white py-2 rounded-lg font-semibold transition flex items-center justify-center gap-1 text-sm">
                         <i class="fas fa-undo-alt text-xs"></i>
@@ -383,13 +474,14 @@ function createTopic(title, description) {
         createdAt: Date.now(),
         lastActivity: Date.now(),
         completed: false,
-        completedAt: null
+        completedAt: null,
+        reactivateUsed: false
     };
     topics.push(newTopic);
     XPSystem.addXP(XPSystem.getXPReward('topic_created'), 'topic_created');
     saveToLocal();
     renderTopics();
-    showNotification(`"${title}" konusu oluşturuldu! +50 XP`, 'success');
+    showNotification(`Topic "${truncate(title)}" created! +50 XP`, 'success');
 }
 
 function addEntry(topicId, title, question, parentId = null) {
@@ -433,10 +525,6 @@ function addEntry(topicId, title, question, parentId = null) {
     scrollToTopicBottom(topicId);
     
     showNotification(`New entry added! +25 XP`, 'success');
-    
-    if (Math.random() < 0.1) {
-        showConfetti(1);
-    }
 }
 
 function completeTopic(topicId) {
@@ -445,8 +533,8 @@ function completeTopic(topicId) {
         topic.completed = true;
         topic.completedAt = Date.now();
         XPSystem.addXP(XPSystem.getXPReward('topic_completed'), 'topic_completed');
-        showAdvancedCelebration();
-        showNotification(`🎉 "${topic.title}" konusu tamamlandı! +100 XP 🎉`, 'success');
+        showConfetti();
+        showNotification(`🎉 Topic "${truncate(topic.title)}" completed! +100 XP 🎉`, 'success');
         saveToLocal();
         renderTopics();
     }
@@ -454,12 +542,13 @@ function completeTopic(topicId) {
 
 function reactivateTopic(topicId) {
     const topic = topics.find(t => t.id === topicId);
-    if (topic && topic.completed) {
+    if (topic && topic.completed && !topic.reactivateUsed) {
+        topic.reactivateUsed = true;
         topic.completed = false;
         topic.completedAt = null;
         topic.lastActivity = Date.now();
         XPSystem.addXP(XPSystem.getXPReward('topic_reactivated'), 'topic_reactivated');
-        showNotification(`"${topic.title}" konusu yeniden aktifleştirildi! +50 XP`, 'success');
+        showNotification(`Topic "${truncate(topic.title)}" reactivated! +50 XP`, 'success');
         saveToLocal();
         
         // Switch to active tab
@@ -478,7 +567,7 @@ function editTopicTitle(topicId, newTitle) {
         topic.title = newTitle;
         saveToLocal();
         renderTopics();
-        showNotification('Konu düzenlendi', 'success');
+        showNotification('Topic edited', 'success');
     }
 }
 
@@ -501,12 +590,12 @@ function editEntryContent(topicId, entryId, parentId, newTitle, newQuestion) {
     findAndEdit(topic.entries);
     saveToLocal();
     renderTopics();
-    showNotification('Entry düzenlendi', 'success');
+    showNotification('Entry edited', 'success');
 }
 
 function deleteTopic(topicId) {
     deleteTarget = { type: 'topic', id: topicId };
-    document.getElementById('confirmMessage').textContent = 'Bu konu ve içindeki tüm entry\'ler silinecek. Bu işlem geri alınamaz!';
+    document.getElementById('confirmMessage').textContent = 'This topic and all its entries will be deleted. This action cannot be undone!';
     openModal('confirmModal');
 }
 
@@ -549,7 +638,7 @@ function deleteEntryRecursive(topicId, entryId, parentId = null) {
     XPSystem.addXP(XPSystem.getXPReward('entry_deleted'), 'entry_deleted');
     saveToLocal();
     renderTopics();
-    showNotification('Entry silindi', 'info');
+    showNotification('Entry deleted', 'info');
 }
 
 function findEntryById(entries, id) {
@@ -567,22 +656,34 @@ function findEntryById(entries, id) {
 function toggleTopic(topicId) {
     const content = document.getElementById(`topic-${topicId}`);
     const chevron = document.getElementById(`chevron-${topicId}`);
-    content.classList.toggle('hidden');
-    chevron.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
-    
-    // Auto-scroll when expanded
-    if (!content.classList.contains('hidden')) {
+    const isOpening = content.classList.contains('hidden');
+
+    document.querySelectorAll('[id^="topic-"]').forEach(el => {
+        if (el.id !== `topic-${topicId}` && !el.classList.contains('hidden')) {
+            el.classList.add('hidden');
+            const otherChevron = document.getElementById(`chevron-${el.id.replace('topic-', '')}`);
+            if (otherChevron) otherChevron.style.transform = 'rotate(0deg)';
+        }
+    });
+
+    if (isOpening) {
+        content.classList.remove('hidden');
+        chevron.style.transform = 'rotate(180deg)';
         scrollToTopicBottom(topicId);
+    } else {
+        content.classList.add('hidden');
+        chevron.style.transform = 'rotate(0deg)';
     }
 }
 
 function openEntryModal(topicId, parentId = null) {
     const topic = topics.find(t => t.id === topicId);
     if (topic && topic.completed) {
-        showNotification('Tamamlanmış konuya entry eklenemez!', 'info');
+        showNotification('Cannot add entry to a completed topic!', 'info');
         return;
     }
     
+    document.getElementById('entryModalTitle').textContent = `New Entry: ${escapeHtml(topic.title)}`;
     document.getElementById('currentTopicId').value = topicId;
     document.getElementById('currentParentId').value = parentId || '';
     document.getElementById('entryTitle').value = '';
@@ -616,7 +717,7 @@ function openEditEntryModal(topicId, entryId, parentId) {
 
 function deleteEntry(topicId, entryId, parentId) {
     deleteTarget = { type: 'entry', id: entryId, topicId: topicId, parentId: parentId };
-    document.getElementById('confirmMessage').textContent = 'Bu entry silinecek ve altındaki entry\'ler bir üst seviyeye taşınacak. Devam etmek istiyor musunuz?';
+    document.getElementById('confirmMessage').textContent = 'This entry will be deleted and its child entries will be moved up. Do you want to continue?';
     openModal('confirmModal');
 }
 
@@ -642,6 +743,109 @@ function loadFromLocal() {
     }
     renderTopics();
     updateXPDisplay();
+}
+
+function truncate(str, max = 50) {
+    if (!str || str.length <= max) return str;
+    return str.slice(0, max) + '...';
+}
+
+const BACKUP_HEADER = '# FollowUp Pro Backup v1 #';
+const ENCRYPTION_KEY = 'FuP!2024@Secure#Backup';
+
+function encryptData(data) {
+    const json = JSON.stringify(data);
+    let result = '';
+    for (let i = 0; i < json.length; i++) {
+        result += String.fromCharCode(json.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+    }
+    return btoa(encodeURIComponent(result));
+}
+
+function decryptData(encoded) {
+    const xored = decodeURIComponent(atob(encoded));
+    let result = '';
+    for (let i = 0; i < xored.length; i++) {
+        result += String.fromCharCode(xored.charCodeAt(i) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length));
+    }
+    return JSON.parse(result);
+}
+
+function exportBackup() {
+    const data = {
+        topics: topics,
+        nextId: nextId,
+        userXP: userXP,
+        userLevel: userLevel,
+        exportedAt: Date.now()
+    };
+    const encrypted = encryptData(data);
+    const content = BACKUP_HEADER + '\n' + encrypted;
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `followup-backup-${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    showNotification('Backup exported successfully!', 'success');
+}
+
+function importBackup(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const text = e.target.result;
+        const newlineIndex = text.indexOf('\n');
+
+        if (newlineIndex === -1 || text.slice(0, newlineIndex) !== BACKUP_HEADER) {
+            document.getElementById('importErrorMessage').textContent = 'The selected file is not a valid FollowUp Pro backup file. Please select a valid .txt backup file.';
+            openModal('importErrorModal');
+            return;
+        }
+
+        let importedData;
+        try {
+            const encrypted = text.slice(newlineIndex + 1).trim();
+            importedData = decryptData(encrypted);
+        } catch (err) {
+            document.getElementById('importErrorMessage').textContent = 'The backup file appears to be corrupted or tampered with. Please use a valid backup file.';
+            openModal('importErrorModal');
+            return;
+        }
+
+        if (!importedData.topics || !Array.isArray(importedData.topics)) {
+            document.getElementById('importErrorMessage').textContent = 'Invalid backup format. The file structure is not recognized.';
+            openModal('importErrorModal');
+            return;
+        }
+
+        const existingIds = new Set(topics.map(t => t.id));
+        const importedTopics = importedData.topics.filter(t => !existingIds.has(t.id));
+        const skippedCount = importedData.topics.length - importedTopics.length;
+
+        if (importedTopics.length === 0) {
+            showNotification('All topics already exist. Nothing to import.', 'info');
+            return;
+        }
+
+        topics.push(...importedTopics);
+        if (importedData.nextId) nextId = Math.max(nextId, importedData.nextId);
+        if (importedData.userXP) userXP = Math.max(userXP, importedData.userXP);
+        if (importedData.userLevel) userLevel = Math.max(userLevel, importedData.userLevel);
+
+        saveToLocal();
+        renderTopics();
+        updateXPDisplay();
+
+        let msg = `${importedTopics.length} topic(s) imported successfully.`;
+        if (skippedCount > 0) msg += ` ${skippedCount} topic(s) skipped (already exist).`;
+        showNotification(msg, 'success');
+    };
+    reader.readAsText(file);
 }
 
 function escapeHtml(str) {
@@ -979,6 +1183,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Event Listeners
     document.getElementById('newTopicBtn').addEventListener('click', () => openModal('topicModal'));
     
+    document.getElementById('exportBtn').addEventListener('click', exportBackup);
+    
+    document.getElementById('importBtn').addEventListener('click', () => {
+        document.getElementById('importFileInput').click();
+    });
+    
+    document.getElementById('importFileInput').addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            importBackup(e.target.files[0]);
+            e.target.value = '';
+        }
+    });
+    
     document.getElementById('saveTopicBtn').addEventListener('click', () => {
         const title = document.getElementById('topicTitle').value.trim();
         const desc = document.getElementById('topicDesc').value.trim();
@@ -988,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('topicTitle').value = '';
             document.getElementById('topicDesc').value = '';
         } else {
-            showNotification('Lütfen bir başlık girin!', 'info');
+            showNotification('Please enter a title!', 'info');
         }
     });
     
@@ -1002,7 +1219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addEntry(topicId, title, question, parentId || null);
             closeModal('entryModal');
         } else {
-            showNotification('Lütfen hem başlık hem de soru girin!', 'info');
+            showNotification('Please enter both title and question!', 'info');
         }
     });
     
@@ -1026,7 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
             editEntryContent(topicId, entryId, parentId, newTitle, newQuestion);
             closeModal('editEntryModal');
         } else {
-            showNotification('Lütfen tüm alanları doldurun!', 'info');
+            showNotification('Please fill in all fields!', 'info');
         }
     });
     
@@ -1037,7 +1254,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 topics.splice(index, 1);
                 saveToLocal();
                 renderTopics();
-                showNotification('Konu silindi', 'info');
+                showNotification('Topic deleted', 'info');
             }
         } else if (deleteTarget.type === 'entry') {
             deleteEntryRecursive(deleteTarget.topicId, deleteTarget.id, deleteTarget.parentId);
@@ -1059,6 +1276,34 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) closeModal(modal.id);
         });
+    });
+
+    // Search
+    const searchInput = document.getElementById('searchInput');
+    const searchClearBtn = document.getElementById('searchClearBtn');
+
+    searchInput.addEventListener('input', () => {
+        searchQuery = searchInput.value.trim();
+        searchClearBtn.classList.toggle('hidden', !searchQuery);
+        renderTopics();
+    });
+
+    searchClearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchQuery = '';
+        searchClearBtn.classList.add('hidden');
+        renderTopics();
+        searchInput.focus();
+    });
+
+    searchInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            searchQuery = '';
+            searchClearBtn.classList.add('hidden');
+            renderTopics();
+            searchInput.blur();
+        }
     });
 
     initAllModals();
