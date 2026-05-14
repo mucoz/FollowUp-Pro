@@ -23,7 +23,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FollowUp Pro">
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen font-['Inter']">
+<body class="bg-gradient-to-br from-slate-900 via-purple-700 to-slate-900 min-h-screen font-['Inter']">
     
     <div id="app" class="container mx-auto px-3 py-3 max-w-5xl">
         <!-- Ana Header - Küçültüldü -->
@@ -33,14 +33,20 @@
                     <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
                         <i class="fas fa-arrow-trend-up text-white text-sm"></i>
                     </div>
-                    <div>
+                    <div class="flex items-center gap-1">
                         <h1 class="text-lg font-bold text-white">FollowUp Pro</h1>
-
+                        <button id="helpBtn" class="w-6 h-6 rounded-full bg-white/10 hover:bg-white/20 text-white/70 hover:text-white flex items-center justify-center transition-all text-[11px] font-bold" title="How to use">
+                            <i class="fas fa-question"></i>
+                        </button>
                     </div>
                 </div>
                 
                 <!-- İstatistik Kartı - Küçültüldü -->
                 <div class="flex gap-2">
+                    <button id="newTopicBtn" class="ios-button bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-1 shadow-lg hover:shadow-xl transition-all text-sm">
+                        <i class="fas fa-plus-circle text-xs"></i>
+                        New Topic
+                    </button>
                     <div class="ios-card bg-white/10 backdrop-blur rounded-lg px-3 py-1.5">
                         <div class="text-white/60 text-[10px]">🏆 XP</div>
                         <div class="text-white text-base font-bold" id="totalXp">0</div>
@@ -54,10 +60,6 @@
                     </button>
                     <button id="importBtn" class="ios-button bg-white/10 hover:bg-white/20 text-white/70 hover:text-white px-2.5 py-2 rounded-xl transition-all text-[11px] font-semibold flex items-center gap-1" title="Import Backup">
                         <i class="fas fa-upload text-xs"></i> Import
-                    </button>
-                    <button id="newTopicBtn" class="ios-button bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-xl font-semibold flex items-center gap-1 shadow-lg hover:shadow-xl transition-all text-sm">
-                        <i class="fas fa-plus-circle text-xs"></i>
-                        New Topic
                     </button>
                 </div>
             </div>
@@ -201,6 +203,80 @@
     </div>
 
     <input type="file" id="importFileInput" accept=".txt" class="hidden">
+
+    <!-- Help Panel -->
+    <div id="helpPanel" class="help-panel fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-[200] translate-x-full transition-transform duration-300 ease-out">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between p-5 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-question-circle text-blue-500"></i> About FollowUp Pro
+                </h2>
+                <button id="helpCloseBtn" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-5 space-y-5 text-gray-600 text-sm leading-relaxed">
+                <div class="help-item" data-highlight="#newTopicBtn">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">1</span>
+                        <h3 class="font-semibold text-gray-800">Creating a Topic</h3>
+                    </div>
+                    <p class="ml-8">Click the <span class="help-highlight" data-target="#newTopicBtn">New Topic</span> button in the header. Give it a title and optional description. Topics are containers for your follow-up entries.</p>
+                </div>
+
+                <div class="help-item" data-highlight="#activeTabBtn">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">2</span>
+                        <h3 class="font-semibold text-gray-800">Adding Entries</h3>
+                    </div>
+                    <p class="ml-8">Click on a topic to expand it, then use <span class="font-semibold text-blue-600">Add New Entry</span>. Each entry needs a short title and a question you want to follow up on.</p>
+                </div>
+
+                <div class="help-item" data-highlight="">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">3</span>
+                        <h3 class="font-semibold text-gray-800">Follow-up Questions</h3>
+                    </div>
+                    <p class="ml-8">Every entry has a <span class="font-semibold text-blue-600">Follow up</span> button. Click it to add deeper nested questions, building a threaded conversation tree.</p>
+                </div>
+
+                <div class="help-item" data-highlight="">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">4</span>
+                        <h3 class="font-semibold text-gray-800">Completing & Reactivating</h3>
+                    </div>
+                    <p class="ml-8">When you're done with a topic, click <span class="font-semibold text-green-600">Complete Topic</span> to archive it and earn XP. You can <span class="font-semibold text-yellow-600">Reactivate</span> a completed topic once to continue working on it.</p>
+                </div>
+
+                <div class="help-item" data-highlight="#totalXp">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">5</span>
+                        <h3 class="font-semibold text-gray-800">XP & Level System</h3>
+                    </div>
+                    <p class="ml-8">Earn XP by creating topics, adding entries, and completing them. Level up to unlock celebrations! The <span class="help-highlight" data-target="#totalXp">XP bar</span> shows your progress to the next level.</p>
+                </div>
+
+                <div class="help-item" data-highlight="">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">6</span>
+                        <h3 class="font-semibold text-gray-800">Smart Ranking</h3>
+                    </div>
+                    <p class="ml-8">Active topics are automatically ranked. Topics with more entries and recent activity appear higher on the list, so your most engaged topics stay at the top.</p>
+                </div>
+
+                <div class="help-item" data-highlight="#searchInput">
+                    <div class="flex items-center gap-2 mb-1">
+                        <span class="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-bold">7</span>
+                        <h3 class="font-semibold text-gray-800">Search & Backup</h3>
+                    </div>
+                    <p class="ml-8">Use the <span class="help-highlight" data-target="#searchInput">search bar</span> to find entries across topics. Use <span class="font-semibold">Export</span> and <span class="font-semibold">Import</span> buttons to backup and restore your data.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Overlay -->
+    <div id="helpOverlay" class="help-overlay fixed inset-0 bg-black/40 z-[199] opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
     <script src="vendor/confetti.min.js"></script>
     <script src="script.js"></script>

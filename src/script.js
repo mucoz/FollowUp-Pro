@@ -1306,6 +1306,54 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Help Panel
+    const helpPanel = document.getElementById('helpPanel');
+    const helpOverlay = document.getElementById('helpOverlay');
+    let currentHighlight = null;
+
+    function openHelp() {
+        helpPanel.classList.add('open');
+        helpOverlay.classList.add('open');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeHelp() {
+        helpPanel.classList.remove('open');
+        helpOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+        if (currentHighlight) {
+            currentHighlight.classList.remove('target-glow');
+            currentHighlight = null;
+        }
+        document.querySelectorAll('.help-highlight.active-highlight').forEach(el => el.classList.remove('active-highlight'));
+    }
+
+    document.getElementById('helpBtn').addEventListener('click', openHelp);
+    document.getElementById('helpCloseBtn').addEventListener('click', closeHelp);
+    helpOverlay.addEventListener('click', closeHelp);
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpPanel.classList.contains('open')) closeHelp();
+    });
+
+    document.querySelectorAll('.help-highlight').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            const target = document.querySelector(el.dataset.target);
+            if (target) {
+                target.classList.add('target-glow');
+                currentHighlight = target;
+                el.classList.add('active-highlight');
+            }
+        });
+        el.addEventListener('mouseleave', () => {
+            if (currentHighlight) {
+                currentHighlight.classList.remove('target-glow');
+                currentHighlight = null;
+            }
+            el.classList.remove('active-highlight');
+        });
+    });
+
     initAllModals();
     addFocusStyles();
 });
