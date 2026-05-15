@@ -260,6 +260,16 @@ body {
     border-color: #3B82F6;
 }
 
+/* Entry collapse smooth animation */
+.entry-children-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.35s ease;
+}
+.entry-children-wrapper.expanded {
+    max-height: 2000px;
+}
+
 /* Responsive düzenlemeler */
 @media (max-width: 640px) {
     .container {

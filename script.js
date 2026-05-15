@@ -10,6 +10,10 @@ let searchQuery = '';
 let userXP = 0;
 let userLevel = 1;
 
+// Expand/Collapse state per entry
+const collapsedEntries = new Set();
+let expandedTopicId = null;
+
 // =============== YARDIMCI FONKSİYONLAR ===============
 class FollowUpAlgorithm {
     static calculateRank(topic) {
@@ -308,20 +312,27 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
     return entries.map(entry => {
         const entryHueValue = hue !== null ? hue : entryHue(entry.id);
         const bgStyle = entryBgStyle(level, entryHueValue);
+        const hasChildren = entry.children && entry.children.length > 0;
+        const isCollapsed = collapsedEntries.has(entry.id);
         
         return `
         <div class="entry-item ml-${Math.min(level * 3, 8)} relative pl-3 py-1">
             <div class="backdrop-blur rounded-lg p-2 mb-1 shadow-sm" style="${bgStyle}">
                 <div class="flex justify-between items-start">
-                    <div class="flex-1">
-                        <h4 class="text-gray-800 text-xs">${escapeHtml(entry.title)}</h4>
-                        <p class="font-semibold text-red-600 text-xs mt-0.5">${escapeHtml(entry.question)}</p>
-                        <div class="text-[10px] text-gray-400 mt-1">
-                            <i class="far fa-clock"></i> ${new Date(entry.createdAt).toLocaleDateString()} ${new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                    <div class="flex items-start flex-1 min-w-0">
+                        <button onclick="toggleEntryCollapse('${entry.id}')" data-entry-id="${entry.id}" class="mt-0.5 mr-1 text-gray-500 hover:text-gray-700 transition flex-shrink-0 ${hasChildren ? '' : 'invisible'}">
+                            <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}"></i>
+                        </button>
+                        <div class="min-w-0">
+                            <h4 class="text-gray-800 text-xs font-medium truncate">${escapeHtml(entry.title)}</h4>
+                            <p class="font-semibold text-red-600 text-xs mt-0.5 truncate">${escapeHtml(entry.question)}</p>
+                            <div class="text-[10px] text-gray-400 mt-1">
+                                <i class="far fa-clock"></i> ${new Date(entry.createdAt).toLocaleDateString()} ${new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                            </div>
                         </div>
                     </div>
                     ${!isReadOnly ? `
-                        <div class="flex gap-1 ml-2">
+                        <div class="flex gap-1 ml-2 flex-shrink-0">
                             <button onclick="openEditEntryModal('${topicId}', '${entry.id}', '${parentId || ''}')" class="text-blue-500 hover:text-blue-700 transition text-xs">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -337,7 +348,7 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
                     </button>
                 ` : ''}
             </div>
-            ${entry.children && entry.children.length > 0 ? renderEntries(entry.children, level + 1, topicId, entry.id, isReadOnly, entryHueValue) : ''}
+            ${hasChildren ? `<div id="ecw-${entry.id}" class="entry-children-wrapper ${isCollapsed ? '' : 'expanded'}">${renderEntries(entry.children, level + 1, topicId, entry.id, isReadOnly, entryHueValue)}</div>` : ''}
         </div>
     `; }).join('');
 }
@@ -477,6 +488,16 @@ function renderTopics() {
             </div>
         </div>
     `).join('');
+
+    // Re-expand previously expanded topic after re-render
+    if (expandedTopicId) {
+        const content = document.getElementById(`topic-${expandedTopicId}`);
+        const chevron = document.getElementById(`chevron-${expandedTopicId}`);
+        if (content) {
+            content.classList.remove('hidden');
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
+        }
+    }
 }
 
 // Scroll to bottom of expanded topic
@@ -678,6 +699,23 @@ function findEntryById(entries, id) {
 }
 
 // =============== UI EVENT HANDLER'LAR ===============
+function toggleEntryCollapse(entryId) {
+    const wrapper = document.getElementById(`ecw-${entryId}`);
+    if (!wrapper) return;
+
+    const chevron = document.querySelector(`button[data-entry-id="${entryId}"] i`);
+    
+    if (collapsedEntries.has(entryId)) {
+        collapsedEntries.delete(entryId);
+        wrapper.classList.add('expanded');
+        if (chevron) chevron.classList.add('rotate-90');
+    } else {
+        collapsedEntries.add(entryId);
+        wrapper.classList.remove('expanded');
+        if (chevron) chevron.classList.remove('rotate-90');
+    }
+}
+
 function toggleTopic(topicId) {
     const content = document.getElementById(`topic-${topicId}`);
     const chevron = document.getElementById(`chevron-${topicId}`);
@@ -694,10 +732,12 @@ function toggleTopic(topicId) {
     if (isOpening) {
         content.classList.remove('hidden');
         chevron.style.transform = 'rotate(180deg)';
+        expandedTopicId = topicId;
         scrollToTopicBottom(topicId);
     } else {
         content.classList.add('hidden');
         chevron.style.transform = 'rotate(0deg)';
+        expandedTopicId = null;
     }
 }
 
