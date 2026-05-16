@@ -7,6 +7,7 @@
 body {
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
+    background: linear-gradient(135deg, #1e293b, #9333ea, #1e293b);
 }
 
 /* iOS tarzı card efekti */
@@ -269,6 +270,141 @@ body {
 .entry-children-wrapper.expanded {
     max-height: 2000px;
 }
+
+/* Settings Panel - Desktop (right side) */
+.settings-panel {
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 100%;
+    max-width: 24rem;
+    transform: translateX(100%);
+}
+.settings-panel.open {
+    transform: translateX(0);
+}
+.settings-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Settings Panel - Mobile (bottom sheet) */
+@media (max-width: 640px) {
+    .settings-panel {
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: auto;
+        max-height: 55vh;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 1.5rem 1.5rem 0 0;
+        transform: translateY(100%);
+    }
+    .settings-panel.open {
+        transform: translateY(0);
+    }
+}
+
+/* Settings tab active state */
+.settings-tab {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* Theme picker track carousel */
+.picker-viewport {
+    position: relative;
+    width: 100%;
+    height: 168px; /* 3 items × 56px */
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+}
+.picker-viewport:active {
+    cursor: grabbing;
+}
+.picker-viewport.dragging .picker-item {
+    pointer-events: none;
+}
+
+.picker-track {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+}
+.picker-track.no-transition {
+    transition: none;
+}
+
+.picker-item {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.75rem;
+    text-align: center;
+    cursor: pointer;
+    user-select: none;
+    margin: 0 auto;
+    font-weight: 500;
+}
+
+.picker-item.selected {
+    box-shadow: 0 0 0 2px #3B82F6, 0 0 12px 4px rgba(59, 130, 246, 0.3);
+}
+
+.picker-arrow {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    background: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    font-size: 0.8rem;
+    margin: 0 auto;
+}
+.picker-arrow:hover {
+    background: #e5e7eb;
+    color: #6b7280;
+}
+
+/* Smooth background theme transition */
+body.theme-transition {
+    transition: background 0.5s ease;
+}
+
+/* Font size classes on #app (scales app content only, not settings/modals) */
+#app.font-large .text-xs  { font-size: calc(0.75rem * 1.1); }
+#app.font-large .text-sm  { font-size: calc(0.875rem * 1.1); }
+#app.font-large .text-base { font-size: calc(1rem * 1.1); }
+#app.font-large .text-lg  { font-size: calc(1.125rem * 1.1); }
+#app.font-large .text-xl  { font-size: calc(1.25rem * 1.1); }
+#app.font-large .text-2xl { font-size: calc(1.5rem * 1.1); }
+#app.font-large .text-4xl { font-size: calc(2.25rem * 1.1); }
+#app.font-large .text-\[9px\]  { font-size: calc(9px * 1.1); }
+#app.font-large .text-\[10px\] { font-size: calc(10px * 1.1); }
+#app.font-large .text-\[11px\] { font-size: calc(11px * 1.1); }
+
+#app.font-xlarge .text-xs  { font-size: calc(0.75rem * 1.2); }
+#app.font-xlarge .text-sm  { font-size: calc(0.875rem * 1.2); }
+#app.font-xlarge .text-base { font-size: calc(1rem * 1.2); }
+#app.font-xlarge .text-lg  { font-size: calc(1.125rem * 1.2); }
+#app.font-xlarge .text-xl  { font-size: calc(1.25rem * 1.2); }
+#app.font-xlarge .text-2xl { font-size: calc(1.5rem * 1.2); }
+#app.font-xlarge .text-4xl { font-size: calc(2.25rem * 1.2); }
+#app.font-xlarge .text-\[9px\]  { font-size: calc(9px * 1.2); }
+#app.font-xlarge .text-\[10px\] { font-size: calc(10px * 1.2); }
+#app.font-xlarge .text-\[11px\] { font-size: calc(11px * 1.2); }
 
 /* Responsive düzenlemeler */
 @media (max-width: 640px) {

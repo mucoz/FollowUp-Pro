@@ -1222,9 +1222,372 @@ function addFocusStyles() {
     document.head.appendChild(style);
 }
 
+// =============== SETTINGS (Theme & Font) ===============
+
+const themes = [
+    { name: 'Royal Purple', from: 'from-slate-900', via: 'via-purple-700', to: 'to-slate-900', color: '#9333ea' },
+    { name: 'Ocean Blue', from: 'from-slate-900', via: 'via-blue-700', to: 'to-slate-900', color: '#1d4ed8' },
+    { name: 'Deep Indigo', from: 'from-slate-900', via: 'via-indigo-600', to: 'to-slate-900', color: '#6366f1' },
+    { name: 'Cyan Sky', from: 'from-slate-900', via: 'via-cyan-600', to: 'to-slate-900', color: '#0891b2' },
+    { name: 'Sunset Rose', from: 'from-slate-900', via: 'via-rose-700', to: 'to-slate-900', color: '#be123c' },
+    { name: 'Golden Amber', from: 'from-slate-900', via: 'via-amber-600', to: 'to-slate-900', color: '#d97706' },
+    { name: 'Fuchsia Glow', from: 'from-slate-900', via: 'via-fuchsia-700', to: 'to-slate-900', color: '#a21caf' },
+    { name: 'Forest Emerald', from: 'from-slate-900', via: 'via-emerald-700', to: 'to-slate-900', color: '#047857' },
+    { name: 'Teal Depths', from: 'from-slate-900', via: 'via-teal-600', to: 'to-slate-900', color: '#0d9488' }
+];
+
+const fonts = [
+    { name: 'Default', scale: '100%', className: '' },
+    { name: 'Large', scale: '110%', className: 'font-large' },
+    { name: 'X-Large', scale: '120%', className: 'font-xlarge' }
+];
+
+const PICKER_ITEM_HEIGHT = 56;
+const PICKER_VISIBLE = 3;
+
+let settingsThemeIndex = 0;
+let settingsFontIndex = 0;
+let savedThemeIndex = 0;
+let savedFontIndex = 0;
+let settingsCurrentTab = 'theme';
+
+// Touch/drag state
+let pickerDrag = { isDragging: false, startY: 0, startTranslate: 0, currentTranslate: 0, target: null };
+
+let _pickerMouseMoveHandler = null;
+let _pickerMouseUpHandler = null;
+
+function getTrackTranslateY(selectedIndex) {
+    return -(selectedIndex * PICKER_ITEM_HEIGHT) + (PICKER_VISIBLE * PICKER_ITEM_HEIGHT) / 2 - PICKER_ITEM_HEIGHT / 2;
+}
+
+function renderThemePicker() {
+    const container = document.getElementById('settingsThemeContent');
+    
+    let html = `
+        <button class="picker-arrow" onclick="settingsThemeScroll(-1)"><i class="fas fa-chevron-up"></i></button>
+        <div class="picker-viewport" id="themePickerViewport">
+            <div class="picker-track" id="themePickerTrack" style="transform: translateY(${getTrackTranslateY(settingsThemeIndex)}px)">
+    `;
+    
+    for (let i = 0; i < themes.length; i++) {
+        const t = themes[i];
+        const selected = i === settingsThemeIndex;
+        const dist = Math.abs(i - settingsThemeIndex);
+        const opacity = 1 - dist * 0.35;
+        const scale = 1 - dist * 0.12;
+        
+        html += `<div class="picker-item ${selected ? 'selected' : ''}" data-theme-idx="${i}" style="
+            background: linear-gradient(135deg, #1e293b, ${t.color}, #1e293b);
+            color: white;
+            width: ${selected ? '14rem' : '10rem'};
+            font-size: ${selected ? '0.9rem' : '0.75rem'};
+            font-weight: ${selected ? '700' : '500'};
+            opacity: ${Math.max(opacity, 0.3)};
+            transform: scale(${Math.max(scale, 0.7)});
+        " onclick="settingsThemeSelect(${i})">
+            ${selected ? '✦ ' : ''}${t.name}${selected ? ' ✦' : ''}
+        </div>`;
+    }
+    
+    html += `
+            </div>
+        </div>
+        <button class="picker-arrow" onclick="settingsThemeScroll(1)"><i class="fas fa-chevron-down"></i></button>
+        <div class="text-center text-xs text-gray-400 mt-1" id="themePickerName">${themes[settingsThemeIndex].name}</div>
+    `;
+    
+    container.innerHTML = html;
+    initPickerDrag('theme');
+}
+
+function renderFontPicker() {
+    const container = document.getElementById('settingsFontContent');
+    
+    let html = `
+        <button class="picker-arrow" onclick="settingsFontScroll(-1)"><i class="fas fa-chevron-up"></i></button>
+        <div class="picker-viewport" id="fontPickerViewport">
+            <div class="picker-track" id="fontPickerTrack" style="transform: translateY(${getTrackTranslateY(settingsFontIndex)}px)">
+    `;
+    
+    for (let i = 0; i < fonts.length; i++) {
+        const f = fonts[i];
+        const selected = i === settingsFontIndex;
+        const dist = Math.abs(i - settingsFontIndex);
+        const opacity = 1 - dist * 0.35;
+        const scale = 1 - dist * 0.12;
+        
+        html += `<div class="picker-item ${selected ? 'selected' : ''}" data-font-idx="${i}" style="
+            background: white;
+            color: #374151;
+            width: ${selected ? '14rem' : '10rem'};
+            font-size: ${selected ? (i === 0 ? '1rem' : i === 1 ? '1.1rem' : '1.2rem') : '0.8rem'};
+            font-weight: ${selected ? '700' : '500'};
+            opacity: ${Math.max(opacity, 0.3)};
+            transform: scale(${Math.max(scale, 0.7)});
+            border: 1px solid ${selected ? '#3B82F6' : '#e5e7eb'};
+        " onclick="settingsFontSelect(${i})">
+            ${selected ? '✦ ' : ''}Aa ${f.name}${selected ? ' ✦' : ''}
+        </div>`;
+    }
+    
+    html += `
+            </div>
+        </div>
+        <button class="picker-arrow" onclick="settingsFontScroll(1)"><i class="fas fa-chevron-down"></i></button>
+        <div class="text-center text-xs text-gray-400 mt-1" id="fontPickerName">${fonts[settingsFontIndex].name}</div>
+    `;
+    
+    container.innerHTML = html;
+    initPickerDrag('font');
+}
+
+function initPickerDrag(type) {
+    const viewportId = type === 'theme' ? 'themePickerViewport' : 'fontPickerViewport';
+    const viewport = document.getElementById(viewportId);
+    if (!viewport) return;
+
+    const getLen = () => type === 'theme' ? themes.length : fonts.length;
+    const setIdx = (i) => {
+        const len = getLen();
+        if (i < 0 || i >= len) return;
+        if (type === 'theme') {
+            settingsThemeIndex = i;
+            applyTheme(i);
+            animatePickerTrack('theme', i);
+        } else {
+            settingsFontIndex = i;
+            applyFont(i);
+            animatePickerTrack('font', i);
+        }
+    };
+
+    // Clean up previous listeners
+    if (_pickerMouseMoveHandler) document.removeEventListener('mousemove', _pickerMouseMoveHandler);
+    if (_pickerMouseUpHandler) document.removeEventListener('mouseup', _pickerMouseUpHandler);
+
+    function onStart(y) {
+        const track = viewport.querySelector('.picker-track');
+        if (!track) return;
+        pickerDrag.isDragging = true;
+        pickerDrag.startY = y;
+        pickerDrag.target = track;
+        pickerDrag.startTranslate = getTrackTranslateY(type === 'theme' ? settingsThemeIndex : settingsFontIndex);
+        pickerDrag.currentTranslate = pickerDrag.startTranslate;
+        track.classList.add('no-transition');
+        viewport.classList.add('dragging');
+    }
+
+    function onMove(y) {
+        if (!pickerDrag.isDragging) return;
+        const delta = y - pickerDrag.startY;
+        pickerDrag.currentTranslate = pickerDrag.startTranslate + delta;
+        pickerDrag.target.style.transform = `translateY(${pickerDrag.currentTranslate}px)`;
+    }
+
+    function onEnd() {
+        if (!pickerDrag.isDragging) return;
+        pickerDrag.isDragging = false;
+        const track = pickerDrag.target;
+        if (!track) return;
+        track.classList.remove('no-transition');
+        viewport.classList.remove('dragging');
+
+        const len = getLen();
+        const currentIdx = type === 'theme' ? settingsThemeIndex : settingsFontIndex;
+        const expectedTranslate = getTrackTranslateY(currentIdx);
+        const delta = pickerDrag.currentTranslate - expectedTranslate;
+        const threshold = PICKER_ITEM_HEIGHT * 0.3;
+
+        if (Math.abs(delta) > threshold) {
+            const dir = delta > 0 ? -1 : 1;
+            const newIdx = currentIdx + dir;
+            if (newIdx >= 0 && newIdx < len) {
+                setIdx(newIdx);
+            } else {
+                track.style.transform = `translateY(${expectedTranslate}px)`;
+            }
+        } else {
+            track.style.transform = `translateY(${expectedTranslate}px)`;
+        }
+
+        pickerDrag.target = null;
+    }
+
+    // Touch events
+    const touchStart = (e) => onStart(e.touches[0].clientY);
+    const touchMove = (e) => onMove(e.touches[0].clientY);
+    viewport.addEventListener('touchstart', touchStart, { passive: true });
+    viewport.addEventListener('touchmove', touchMove, { passive: true });
+    viewport.addEventListener('touchend', onEnd, { passive: true });
+
+    // Mouse events
+    const mouseStart = (e) => {
+        e.preventDefault();
+        onStart(e.clientY);
+    };
+    _pickerMouseMoveHandler = (e) => onMove(e.clientY);
+    _pickerMouseUpHandler = onEnd;
+    viewport.addEventListener('mousedown', mouseStart);
+    document.addEventListener('mousemove', _pickerMouseMoveHandler);
+    document.addEventListener('mouseup', _pickerMouseUpHandler);
+}
+
+function settingsThemeScroll(dir) {
+    const newIdx = settingsThemeIndex + dir;
+    if (newIdx < 0 || newIdx >= themes.length) return;
+    settingsThemeIndex = newIdx;
+    applyTheme(newIdx);
+    animatePickerTrack('theme', newIdx);
+}
+
+function settingsFontScroll(dir) {
+    const newIdx = settingsFontIndex + dir;
+    if (newIdx < 0 || newIdx >= fonts.length) return;
+    settingsFontIndex = newIdx;
+    applyFont(newIdx);
+    animatePickerTrack('font', newIdx);
+}
+
+function settingsThemeSelect(idx) {
+    if (idx < 0 || idx >= themes.length) return;
+    settingsThemeIndex = idx;
+    applyTheme(idx);
+    animatePickerTrack('theme', idx);
+}
+
+function settingsFontSelect(idx) {
+    if (idx < 0 || idx >= fonts.length) return;
+    settingsFontIndex = idx;
+    applyFont(idx);
+    animatePickerTrack('font', idx);
+}
+
+function animatePickerTrack(type, newIdx) {
+    const trackId = type === 'theme' ? 'themePickerTrack' : 'fontPickerTrack';
+    const track = document.getElementById(trackId);
+    if (!track) {
+        if (type === 'theme') renderThemePicker();
+        else renderFontPicker();
+        return;
+    }
+    
+    track.style.transform = `translateY(${getTrackTranslateY(newIdx)}px)`;
+    
+    const nameEl = document.getElementById(type === 'theme' ? 'themePickerName' : 'fontPickerName');
+    if (nameEl) nameEl.textContent = (type === 'theme' ? themes : fonts)[newIdx].name;
+    
+    const items = track.querySelectorAll('.picker-item');
+    const data = type === 'theme' ? themes : fonts;
+    
+    items.forEach((el, i) => {
+        const selected = i === newIdx;
+        const dist = Math.abs(i - newIdx);
+        const opacity = 1 - dist * 0.35;
+        const scale = 1 - dist * 0.12;
+        
+        el.classList.toggle('selected', selected);
+        el.style.opacity = Math.max(opacity, 0.3);
+        el.style.transform = `scale(${Math.max(scale, 0.7)})`;
+        
+        if (type === 'theme') {
+            el.style.width = selected ? '14rem' : '10rem';
+            el.style.fontSize = selected ? '0.9rem' : '0.75rem';
+            el.style.fontWeight = selected ? '700' : '500';
+            el.innerHTML = selected ? `✦ ${data[i].name} ✦` : data[i].name;
+        } else {
+            el.style.width = selected ? '14rem' : '10rem';
+            el.style.fontWeight = selected ? '700' : '500';
+            el.style.borderColor = selected ? '#3B82F6' : '#e5e7eb';
+            const fontSize = selected ? (i === 0 ? '1rem' : i === 1 ? '1.1rem' : '1.2rem') : '0.8rem';
+            el.style.fontSize = fontSize;
+            el.innerHTML = selected ? `✦ Aa ${data[i].name} ✦` : `Aa ${data[i].name}`;
+        }
+    });
+}
+
+function applyTheme(index) {
+    const i = Math.min(Math.max(index, 0), themes.length - 1);
+    const t = themes[i];
+    const body = document.body;
+    body.classList.add('theme-transition');
+    body.style.background = `linear-gradient(135deg, #1e293b, ${t.color}, #1e293b)`;
+    body.dataset.theme = i;
+}
+
+function applyFont(index) {
+    const f = fonts[Math.min(Math.max(index, 0), fonts.length - 1)];
+    const app = document.getElementById('app');
+    app.classList.remove('font-large', 'font-xlarge');
+    if (f.className) app.classList.add(f.className);
+    document.body.dataset.font = index;
+}
+
+function openSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const overlay = document.getElementById('settingsOverlay');
+    savedThemeIndex = settingsThemeIndex;
+    savedFontIndex = settingsFontIndex;
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    settingsCurrentTab = 'theme';
+    document.getElementById('settingsThemeContent').classList.remove('hidden');
+    document.getElementById('settingsFontContent').classList.add('hidden');
+    document.getElementById('settingsThemeTab').classList.add('text-blue-600', 'border-blue-600');
+    document.getElementById('settingsThemeTab').classList.remove('text-gray-400', 'border-transparent');
+    document.getElementById('settingsFontTab').classList.remove('text-blue-600', 'border-blue-600');
+    document.getElementById('settingsFontTab').classList.add('text-gray-400', 'border-transparent');
+    renderThemePicker();
+    renderFontPicker();
+}
+
+function closeSettings() {
+    const panel = document.getElementById('settingsPanel');
+    const overlay = document.getElementById('settingsOverlay');
+    panel.classList.remove('open');
+    overlay.classList.remove('open');
+    document.body.style.overflow = '';
+}
+
+function loadSettings() {
+    const themeIdx = parseInt(localStorage.getItem('followup_theme'));
+    const fontIdx = parseInt(localStorage.getItem('followup_font'));
+    settingsThemeIndex = !isNaN(themeIdx) && themeIdx >= 0 ? themeIdx : 0;
+    settingsFontIndex = !isNaN(fontIdx) && fontIdx >= 0 ? fontIdx : 0;
+    savedThemeIndex = settingsThemeIndex;
+    savedFontIndex = settingsFontIndex;
+    const t = themes[Math.min(settingsThemeIndex, themes.length - 1)];
+    document.body.style.background = `linear-gradient(135deg, #1e293b, ${t.color}, #1e293b)`;
+    document.body.dataset.theme = settingsThemeIndex;
+    const f = fonts[Math.min(Math.max(settingsFontIndex, 0), fonts.length - 1)];
+    const app = document.getElementById('app');
+    app.classList.remove('font-large', 'font-xlarge');
+    if (f.className) app.classList.add(f.className);
+    document.body.dataset.font = settingsFontIndex;
+}
+
+function settingsSave() {
+    savedThemeIndex = settingsThemeIndex;
+    savedFontIndex = settingsFontIndex;
+    localStorage.setItem('followup_theme', settingsThemeIndex);
+    localStorage.setItem('followup_font', settingsFontIndex);
+    closeSettings();
+    showNotification('Settings saved!', 'success');
+}
+
+function settingsCancel() {
+    settingsThemeIndex = savedThemeIndex;
+    settingsFontIndex = savedFontIndex;
+    applyTheme(settingsThemeIndex);
+    applyFont(settingsFontIndex);
+    closeSettings();
+}
+
 // =============== INITIALIZATION ===============
 document.addEventListener('DOMContentLoaded', () => {
     loadFromLocal();
+    loadSettings();
     
     // Tab switching
     document.getElementById('activeTabBtn').addEventListener('click', () => {
@@ -1258,6 +1621,44 @@ document.getElementById('activeTabBtn').classList.add('bg-white/20', 'backdrop-b
         if (e.target.files.length > 0) {
             importBackup(e.target.files[0]);
             e.target.value = '';
+        }
+    });
+
+    // Settings
+    document.getElementById('settingsBtn').addEventListener('click', openSettings);
+    document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
+    document.getElementById('settingsOverlay').addEventListener('click', closeSettings);
+    document.getElementById('settingsSaveBtn').addEventListener('click', settingsSave);
+    document.getElementById('settingsCancelBtn').addEventListener('click', settingsCancel);
+
+    document.getElementById('settingsThemeTab').addEventListener('click', () => {
+        settingsCurrentTab = 'theme';
+        document.getElementById('settingsThemeContent').classList.remove('hidden');
+        document.getElementById('settingsFontContent').classList.add('hidden');
+        document.getElementById('settingsThemeTab').classList.add('text-blue-600', 'border-blue-600');
+        document.getElementById('settingsThemeTab').classList.remove('text-gray-400', 'border-transparent');
+        document.getElementById('settingsFontTab').classList.remove('text-blue-600', 'border-blue-600');
+        document.getElementById('settingsFontTab').classList.add('text-gray-400', 'border-transparent');
+        renderThemePicker();
+    });
+
+    document.getElementById('settingsFontTab').addEventListener('click', () => {
+        settingsCurrentTab = 'font';
+        document.getElementById('settingsFontContent').classList.remove('hidden');
+        document.getElementById('settingsThemeContent').classList.add('hidden');
+        document.getElementById('settingsFontTab').classList.add('text-blue-600', 'border-blue-600');
+        document.getElementById('settingsFontTab').classList.remove('text-gray-400', 'border-transparent');
+        document.getElementById('settingsThemeTab').classList.remove('text-blue-600', 'border-blue-600');
+        document.getElementById('settingsThemeTab').classList.add('text-gray-400', 'border-transparent');
+        renderFontPicker();
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const panel = document.getElementById('settingsPanel');
+            if (panel.classList.contains('open')) {
+                settingsCancel();
+            }
         }
     });
     

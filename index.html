@@ -23,7 +23,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FollowUp Pro">
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-purple-700 to-slate-900 min-h-screen font-['Inter']">
+<body class="min-h-screen font-['Inter']" data-theme="0" data-font="0">
     
     <div id="app" class="container mx-auto px-3 py-3 max-w-5xl">
         <!-- Ana Header - Küçültüldü -->
@@ -62,6 +62,10 @@
                     <button id="importBtn" class="ios-button bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-xl transition-all text-[11px] font-semibold flex items-center justify-center gap-1 px-1.5 sm:px-2.5 h-9 sm:h-10" title="Import Backup">
                         <i class="fas fa-upload text-xs"></i>
                         <span class="hidden sm:inline">Import</span>
+                    </button>
+                    <button id="settingsBtn" class="ios-button bg-white/10 hover:bg-white/20 text-white/70 hover:text-white rounded-xl transition-all text-[11px] font-semibold flex items-center justify-center gap-1 px-1.5 sm:px-2.5 h-9 sm:h-10" title="Settings">
+                        <i class="fas fa-cog text-xs"></i>
+                        <span class="hidden sm:inline">Settings</span>
                     </button>
                 </div>
             </div>
@@ -279,6 +283,49 @@
 
     <!-- Help Overlay -->
     <div id="helpOverlay" class="help-overlay fixed inset-0 bg-black/40 z-[199] opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel fixed bg-white shadow-2xl z-[200] transition-transform duration-300 ease-out">
+        <div class="flex flex-col h-full">
+            <div class="flex items-center justify-between p-4 sm:p-5 border-b border-gray-100">
+                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fas fa-cog text-gray-500"></i> Settings
+                </h2>
+                <button id="settingsCloseBtn" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            </div>
+
+            <!-- Tab bar -->
+            <div class="flex border-b border-gray-100">
+                <button id="settingsThemeTab" class="settings-tab flex-1 py-3 text-sm font-semibold text-blue-600 border-b-2 border-blue-600 transition-colors" data-tab="theme">
+                    <i class="fas fa-palette mr-1.5"></i>Theme
+                </button>
+                <button id="settingsFontTab" class="settings-tab flex-1 py-3 text-sm font-semibold text-gray-400 border-b-2 border-transparent transition-colors" data-tab="font">
+                    <i class="fas fa-font mr-1.5"></i>Font
+                </button>
+            </div>
+
+            <!-- Tab content -->
+            <div class="flex-1 overflow-y-auto">
+                <div id="settingsThemeContent" class="settings-tab-content p-4 sm:p-5"></div>
+                <div id="settingsFontContent" class="settings-tab-content hidden p-4 sm:p-5"></div>
+            </div>
+
+            <!-- Save / Cancel -->
+            <div class="p-4 sm:p-5 border-t border-gray-100 flex gap-3">
+                <button id="settingsSaveBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2.5 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all">
+                    <i class="fas fa-check mr-1.5"></i>Save
+                </button>
+                <button id="settingsCancelBtn" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-600 py-2.5 rounded-xl font-semibold text-sm transition-all">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div id="settingsOverlay" class="fixed inset-0 bg-black/40 z-[199] opacity-0 pointer-events-none transition-opacity duration-300"></div>
 
     <script src="vendor/confetti.min.js"></script>
     <script src="script.js"></script>
