@@ -1225,15 +1225,15 @@ function addFocusStyles() {
 // =============== SETTINGS (Theme & Font) ===============
 
 const themes = [
-    { name: 'Royal Purple', from: 'from-slate-900', via: 'via-purple-700', to: 'to-slate-900', color: '#9333ea' },
-    { name: 'Ocean Blue', from: 'from-slate-900', via: 'via-blue-700', to: 'to-slate-900', color: '#1d4ed8' },
-    { name: 'Deep Indigo', from: 'from-slate-900', via: 'via-indigo-600', to: 'to-slate-900', color: '#6366f1' },
-    { name: 'Cyan Sky', from: 'from-slate-900', via: 'via-cyan-600', to: 'to-slate-900', color: '#0891b2' },
-    { name: 'Sunset Rose', from: 'from-slate-900', via: 'via-rose-700', to: 'to-slate-900', color: '#be123c' },
-    { name: 'Golden Amber', from: 'from-slate-900', via: 'via-amber-600', to: 'to-slate-900', color: '#d97706' },
-    { name: 'Fuchsia Glow', from: 'from-slate-900', via: 'via-fuchsia-700', to: 'to-slate-900', color: '#a21caf' },
-    { name: 'Forest Emerald', from: 'from-slate-900', via: 'via-emerald-700', to: 'to-slate-900', color: '#047857' },
-    { name: 'Teal Depths', from: 'from-slate-900', via: 'via-teal-600', to: 'to-slate-900', color: '#0d9488' }
+    { name: 'Royal Purple', from: 'from-slate-900', via: 'via-purple-700', to: 'to-slate-900', color: '#9333ea', btnFrom: 'from-blue-500', btnTo: 'to-purple-600', barFrom: 'from-blue-400', barTo: 'to-purple-500' },
+    { name: 'Ocean Blue', from: 'from-slate-900', via: 'via-blue-700', to: 'to-slate-900', color: '#1d4ed8', btnFrom: 'from-blue-400', btnTo: 'to-indigo-600', barFrom: 'from-blue-300', barTo: 'to-indigo-500' },
+    { name: 'Deep Indigo', from: 'from-slate-900', via: 'via-indigo-600', to: 'to-slate-900', color: '#6366f1', btnFrom: 'from-indigo-400', btnTo: 'to-purple-600', barFrom: 'from-indigo-300', barTo: 'to-purple-500' },
+    { name: 'Cyan Sky', from: 'from-slate-900', via: 'via-cyan-600', to: 'to-slate-900', color: '#0891b2', btnFrom: 'from-cyan-400', btnTo: 'to-blue-600', barFrom: 'from-cyan-300', barTo: 'to-blue-500' },
+    { name: 'Sunset Rose', from: 'from-slate-900', via: 'via-rose-700', to: 'to-slate-900', color: '#be123c', btnFrom: 'from-pink-500', btnTo: 'to-rose-600', barFrom: 'from-pink-400', barTo: 'to-rose-500' },
+    { name: 'Golden Amber', from: 'from-slate-900', via: 'via-amber-600', to: 'to-slate-900', color: '#d97706', btnFrom: 'from-yellow-400', btnTo: 'to-orange-500', barFrom: 'from-yellow-300', barTo: 'to-orange-400' },
+    { name: 'Fuchsia Glow', from: 'from-slate-900', via: 'via-fuchsia-700', to: 'to-slate-900', color: '#a21caf', btnFrom: 'from-fuchsia-400', btnTo: 'to-pink-600', barFrom: 'from-fuchsia-300', barTo: 'to-pink-500' },
+    { name: 'Forest Emerald', from: 'from-slate-900', via: 'via-emerald-700', to: 'to-slate-900', color: '#047857', btnFrom: 'from-emerald-400', btnTo: 'to-green-600', barFrom: 'from-emerald-300', barTo: 'to-green-500' },
+    { name: 'Teal Depths', from: 'from-slate-900', via: 'via-teal-600', to: 'to-slate-900', color: '#0d9488', btnFrom: 'from-teal-400', btnTo: 'to-cyan-600', barFrom: 'from-teal-300', barTo: 'to-cyan-500' }
 ];
 
 const fonts = [
@@ -1510,6 +1510,26 @@ function animatePickerTrack(type, newIdx) {
     });
 }
 
+function applyButtonTheme(index) {
+    const i = Math.min(Math.max(index, 0), themes.length - 1);
+    const t = themes[i];
+    const gradR = `bg-gradient-to-r ${t.btnFrom} ${t.btnTo}`;
+    const gradBr = `bg-gradient-to-br ${t.btnFrom} ${t.btnTo}`;
+    const barGrad = `bg-gradient-to-r ${t.barFrom} ${t.barTo}`;
+    
+    const btnIds = ['newTopicBtn', 'saveTopicBtn', 'saveEntryBtn', 'saveEditTopicBtn', 'saveEditEntryBtn'];
+    btnIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = el.className.replace(/bg-gradient-to-r\s+\S+\s+\S+/, gradR);
+    });
+    
+    const logo = document.getElementById('appLogoIcon');
+    if (logo) logo.className = logo.className.replace(/bg-gradient-to-br\s+\S+\s+\S+/, gradBr);
+    
+    const bar = document.getElementById('xpProgressBar');
+    if (bar) bar.className = bar.className.replace(/bg-gradient-to-r\s+\S+\s+\S+/, barGrad);
+}
+
 function applyTheme(index) {
     const i = Math.min(Math.max(index, 0), themes.length - 1);
     const t = themes[i];
@@ -1517,6 +1537,7 @@ function applyTheme(index) {
     body.classList.add('theme-transition');
     body.style.background = `linear-gradient(135deg, #1e293b, ${t.color}, #1e293b)`;
     body.dataset.theme = i;
+    applyButtonTheme(i);
 }
 
 function applyFont(index) {
@@ -1564,6 +1585,7 @@ function loadSettings() {
     app.classList.remove('font-large', 'font-xlarge');
     if (f.className) app.classList.add(f.className);
     document.body.dataset.font = settingsFontIndex;
+    applyButtonTheme(settingsThemeIndex);
 }
 
 // =============== INITIALIZATION ===============
