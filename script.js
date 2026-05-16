@@ -1247,8 +1247,6 @@ const PICKER_VISIBLE = 3;
 
 let settingsThemeIndex = 0;
 let settingsFontIndex = 0;
-let savedThemeIndex = 0;
-let savedFontIndex = 0;
 let settingsCurrentTab = 'theme';
 
 // Touch/drag state
@@ -1354,10 +1352,12 @@ function initPickerDrag(type) {
         if (type === 'theme') {
             settingsThemeIndex = i;
             applyTheme(i);
+            localStorage.setItem('followup_theme', i);
             animatePickerTrack('theme', i);
         } else {
             settingsFontIndex = i;
             applyFont(i);
+            localStorage.setItem('followup_font', i);
             animatePickerTrack('font', i);
         }
     };
@@ -1438,6 +1438,7 @@ function settingsThemeScroll(dir) {
     if (newIdx < 0 || newIdx >= themes.length) return;
     settingsThemeIndex = newIdx;
     applyTheme(newIdx);
+    localStorage.setItem('followup_theme', newIdx);
     animatePickerTrack('theme', newIdx);
 }
 
@@ -1446,6 +1447,7 @@ function settingsFontScroll(dir) {
     if (newIdx < 0 || newIdx >= fonts.length) return;
     settingsFontIndex = newIdx;
     applyFont(newIdx);
+    localStorage.setItem('followup_font', newIdx);
     animatePickerTrack('font', newIdx);
 }
 
@@ -1453,6 +1455,7 @@ function settingsThemeSelect(idx) {
     if (idx < 0 || idx >= themes.length) return;
     settingsThemeIndex = idx;
     applyTheme(idx);
+    localStorage.setItem('followup_theme', idx);
     animatePickerTrack('theme', idx);
 }
 
@@ -1460,6 +1463,7 @@ function settingsFontSelect(idx) {
     if (idx < 0 || idx >= fonts.length) return;
     settingsFontIndex = idx;
     applyFont(idx);
+    localStorage.setItem('followup_font', idx);
     animatePickerTrack('font', idx);
 }
 
@@ -1526,8 +1530,6 @@ function applyFont(index) {
 function openSettings() {
     const panel = document.getElementById('settingsPanel');
     const overlay = document.getElementById('settingsOverlay');
-    savedThemeIndex = settingsThemeIndex;
-    savedFontIndex = settingsFontIndex;
     panel.classList.add('open');
     overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -1555,8 +1557,6 @@ function loadSettings() {
     const fontIdx = parseInt(localStorage.getItem('followup_font'));
     settingsThemeIndex = !isNaN(themeIdx) && themeIdx >= 0 ? themeIdx : 0;
     settingsFontIndex = !isNaN(fontIdx) && fontIdx >= 0 ? fontIdx : 0;
-    savedThemeIndex = settingsThemeIndex;
-    savedFontIndex = settingsFontIndex;
     const t = themes[Math.min(settingsThemeIndex, themes.length - 1)];
     document.body.style.background = `linear-gradient(135deg, #1e293b, ${t.color}, #1e293b)`;
     document.body.dataset.theme = settingsThemeIndex;
@@ -1565,23 +1565,6 @@ function loadSettings() {
     app.classList.remove('font-large', 'font-xlarge');
     if (f.className) app.classList.add(f.className);
     document.body.dataset.font = settingsFontIndex;
-}
-
-function settingsSave() {
-    savedThemeIndex = settingsThemeIndex;
-    savedFontIndex = settingsFontIndex;
-    localStorage.setItem('followup_theme', settingsThemeIndex);
-    localStorage.setItem('followup_font', settingsFontIndex);
-    closeSettings();
-    showNotification('Settings saved!', 'success');
-}
-
-function settingsCancel() {
-    settingsThemeIndex = savedThemeIndex;
-    settingsFontIndex = savedFontIndex;
-    applyTheme(settingsThemeIndex);
-    applyFont(settingsFontIndex);
-    closeSettings();
 }
 
 // =============== INITIALIZATION ===============
@@ -1628,8 +1611,6 @@ document.getElementById('activeTabBtn').classList.add('bg-white/20', 'backdrop-b
     document.getElementById('settingsBtn').addEventListener('click', openSettings);
     document.getElementById('settingsCloseBtn').addEventListener('click', closeSettings);
     document.getElementById('settingsOverlay').addEventListener('click', closeSettings);
-    document.getElementById('settingsSaveBtn').addEventListener('click', settingsSave);
-    document.getElementById('settingsCancelBtn').addEventListener('click', settingsCancel);
 
     document.getElementById('settingsThemeTab').addEventListener('click', () => {
         settingsCurrentTab = 'theme';
@@ -1657,7 +1638,7 @@ document.getElementById('activeTabBtn').classList.add('bg-white/20', 'backdrop-b
         if (e.key === 'Escape') {
             const panel = document.getElementById('settingsPanel');
             if (panel.classList.contains('open')) {
-                settingsCancel();
+                closeSettings();
             }
         }
     });
