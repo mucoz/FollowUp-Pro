@@ -1541,7 +1541,6 @@ function openSettings() {
     document.getElementById('settingsFontTab').classList.remove('text-blue-600', 'border-blue-600');
     document.getElementById('settingsFontTab').classList.add('text-gray-400', 'border-transparent');
     renderThemePicker();
-    renderFontPicker();
 }
 
 function closeSettings() {

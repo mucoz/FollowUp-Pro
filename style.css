@@ -311,6 +311,7 @@ body {
 .settings-tab {
     transition: all 0.2s ease;
     cursor: pointer;
+    touch-action: manipulation;
 }
 
 /* Theme picker track carousel */
