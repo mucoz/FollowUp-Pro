@@ -86,11 +86,12 @@
         </div>
         
         <!-- Tabs: Active vs Completed -->
-        <div class="flex mb-4 bg-white/10 rounded-xl p-1 dark:bg-gray-800/40">
-            <button id="activeTabBtn" class="tab-button flex-1 py-1.5 rounded-lg font-semibold transition-all bg-white/20 backdrop-blur text-white text-sm dark:bg-white/10">
+            <div class="flex mb-4 bg-white/10 rounded-xl p-1 dark:bg-gray-800/40 relative">
+            <div id="tabIndicator" class="absolute bottom-1 left-1 h-[calc(100%-0.5rem)] w-1/2 bg-white/15 rounded-lg transition-all duration-200" style="left: 0.25rem;"></div>
+            <button id="activeTabBtn" class="tab-button relative flex-1 py-1.5 rounded-lg font-semibold text-white text-sm z-10">
                 <i class="fas fa-fire"></i> Active Topics
             </button>
-            <button id="completedTabBtn" class="tab-button flex-1 py-1.5 rounded-lg font-semibold transition-all text-white/40 text-sm dark:text-gray-500">
+            <button id="completedTabBtn" class="tab-button relative flex-1 py-1.5 rounded-lg font-semibold text-white/40 text-sm z-10">
                 <i class="fas fa-check-circle"></i> Completed
             </button>
         </div>

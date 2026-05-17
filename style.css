@@ -128,7 +128,7 @@ body {
 
 /* Tab geçiş animasyonu */
 .tab-button {
-    transition: all 0.2s ease;
+    transition: none;
 }
 
 /* Progress Bar Spin Glow */
