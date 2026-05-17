@@ -73,6 +73,7 @@ class XPSystem {
         
         if (userLevel > oldLevel) {
             showSchoolPrideConfetti();
+            showCelebrationText('Leveled Up!', 'levelup');
             showNotification(`🎉 LEVEL UP! Level ${userLevel} 🎉`, 'levelup');
         }
         
@@ -208,6 +209,135 @@ function showSchoolPrideConfetti(duration = 2000) {
             requestAnimationFrame(frame);
         }
     }());
+}
+
+let _celebrationAnim = { animFrame: null, interval: null, overlay: null, timeout: null };
+
+function showCelebrationText(text, type) {
+    const prev = _celebrationAnim;
+    if (prev.animFrame) cancelAnimationFrame(prev.animFrame);
+    if (prev.interval) clearInterval(prev.interval);
+    if (prev.timeout) clearTimeout(prev.timeout);
+    if (prev.overlay && prev.overlay.parentNode) prev.overlay.remove();
+    document.getElementById('app')?.classList.remove('screen-shake');
+
+    const isLevelUp = type === 'levelup';
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;pointer-events:none;display:flex;align-items:center;justify-content:center;';
+
+    const textEl = document.createElement('span');
+    textEl.textContent = text;
+    textEl.style.cssText = `
+        position:relative;z-index:1;
+        font-size:clamp(2.5rem,8vw,5rem);font-weight:900;font-family:Inter,sans-serif;
+        background:${isLevelUp?'linear-gradient(135deg,#FFD700,#FF6B00)':'linear-gradient(135deg,#00FF87,#00BFFF)'};
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+        filter:drop-shadow(0 0 30px ${isLevelUp?'rgba(255,215,0,0.6)':'rgba(0,255,135,0.6)'});
+    `;
+    textEl.classList.add('celebration-text');
+    overlay.appendChild(textEl);
+
+    const canvas = document.createElement('canvas');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;';
+    overlay.appendChild(canvas);
+    document.body.appendChild(overlay);
+
+    const ctx = canvas.getContext('2d');
+    const W = window.innerWidth;
+    const H = window.innerHeight;
+    ctx.scale(dpr, dpr);
+
+    const app = document.getElementById('app');
+    app?.classList.add('screen-shake');
+    setTimeout(() => app?.classList.remove('screen-shake'), 500);
+
+    let particles = [];
+    let startTime = performance.now();
+
+    function createSparkles(count, cx, cy, radius, spread) {
+        const cx2 = cx || W / 2, cy2 = cy || H / 2;
+        const spreadMul = spread || 1;
+        const r = radius || 0;
+        const colors = isLevelUp
+            ? ['#FFD700','#FFA500','#FF6B00','#FFF']
+            : ['#00FF87','#00BFFF','#00FFAA','#FFF'];
+        for (let i = 0; i < count; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = (1.5 + Math.random() * 4) * spreadMul;
+            particles.push({
+                x: cx2 + (Math.random() - 0.5) * r,
+                y: cy2 + (Math.random() - 0.5) * r,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 0.5,
+                life: 1, decay: 0.01 + Math.random() * 0.015,
+                size: 1.5 + Math.random() * 3,
+                color: colors[Math.floor(Math.random() * colors.length)],
+            });
+        }
+    }
+
+    let isFading = false;
+
+    createSparkles(50, W / 2, H / 2, 40, 1);
+    _celebrationAnim.interval = setInterval(() => {
+        if (!isFading) createSparkles(2, W / 2 + (Math.random() - 0.5) * 200, H / 2 + (Math.random() - 0.5) * 80, 0, 0.7);
+    }, 60);
+
+    function animate(time) {
+        const elapsed = time - startTime;
+
+        if (elapsed > (isLevelUp ? 4000 : 2000) && !isFading) {
+            isFading = true;
+            clearInterval(_celebrationAnim.interval);
+            overlay.style.transition = 'opacity 1.2s ease-out';
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                if (overlay.parentNode) overlay.remove();
+                if (_celebrationAnim.animFrame) cancelAnimationFrame(_celebrationAnim.animFrame);
+                _celebrationAnim.animFrame = null;
+            }, 1400);
+        }
+
+        ctx.clearRect(0, 0, W, H);
+
+        for (let i = particles.length - 1; i >= 0; i--) {
+            const p = particles[i];
+            p.x += p.vx; p.y += p.vy;
+            p.vy += 0.06;
+            p.life -= p.decay;
+            if (p.life > 0) {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * Math.max(p.life, 0.2), 0, Math.PI * 2);
+                ctx.fill();
+            }
+            if (p.life <= 0) particles.splice(i, 1);
+        }
+
+        ctx.globalAlpha = 1;
+
+        if (!isFading || particles.length > 0) {
+            _celebrationAnim.animFrame = requestAnimationFrame(animate);
+        }
+    }
+
+    _celebrationAnim.animFrame = requestAnimationFrame(animate);
+    _celebrationAnim.overlay = overlay;
+
+    _celebrationAnim.timeout = setTimeout(() => {
+        clearInterval(_celebrationAnim.interval);
+        if (_celebrationAnim.animFrame) cancelAnimationFrame(_celebrationAnim.animFrame);
+        app?.classList.remove('screen-shake');
+        if (overlay.parentNode) overlay.remove();
+        _celebrationAnim.animFrame = null;
+        _celebrationAnim.interval = null;
+        _celebrationAnim.overlay = null;
+        _celebrationAnim.timeout = null;
+    }, 5000);
 }
 
 function showNotification(message, type = 'info') {
@@ -576,10 +706,14 @@ function addEntry(topicId, title, question, parentId = null) {
 function completeTopic(topicId) {
     const topic = topics.find(t => t.id === topicId);
     if (topic && !topic.completed) {
+        const oldLevel = userLevel;
         topic.completed = true;
         topic.completedAt = Date.now();
         XPSystem.addXP(XPSystem.getXPReward('topic_completed'), 'topic_completed');
         showConfetti();
+        if (userLevel === oldLevel) {
+            showCelebrationText('Completed!', 'complete');
+        }
         showNotification(`🎉 Topic "${truncate(topic.title)}" completed! +100 XP 🎉`, 'success');
         saveToLocal();
         renderTopics();
