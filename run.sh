@@ -9,7 +9,7 @@ echo ""
 
 # Script dizinini al
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-HTML_FILE="$SCRIPT_DIR/src/index.html"
+HTML_FILE="$SCRIPT_DIR/index.html"
 
 if [[ ! -f "$HTML_FILE" ]]; then
     HTML_FILE="$SCRIPT_DIR/index.html"
