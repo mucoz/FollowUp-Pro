@@ -118,6 +118,51 @@
             </div>
             <input type="text" id="topicTitle" placeholder="Topic title..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm">
             <textarea id="topicDesc" placeholder="Description (optional)..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
+            
+            <!-- Type Selector -->
+            <div class="mb-3">
+                <label class="text-xs font-semibold text-gray-500 mb-1.5 block">Type</label>
+                <div class="flex gap-2">
+                    <label class="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium type-option" data-type="action">
+                        <input type="radio" name="topicType" value="action" checked class="hidden">
+                        <i class="fas fa-bolt"></i> Action
+                    </label>
+                    <label class="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium type-option" data-type="pinned">
+                        <input type="radio" name="topicType" value="pinned" class="hidden">
+                        <i class="fas fa-thumbtack"></i> Pinned
+                    </label>
+                    <label class="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 border-2 rounded-lg cursor-pointer transition-all text-xs font-medium type-option" data-type="tutorial">
+                        <input type="radio" name="topicType" value="tutorial" class="hidden">
+                        <i class="fas fa-book"></i> Tutorial
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Time Limit (only for Action) -->
+            <div id="timeLimitGroup" class="mb-3">
+                <label class="text-xs font-semibold text-gray-500 mb-1.5 block">Time Limit</label>
+                <div class="flex gap-1">
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight" data-value="300000">
+                        <input type="radio" name="timeLimit" value="300000" class="hidden">5m
+                    </label>
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight" data-value="3600000">
+                        <input type="radio" name="timeLimit" value="3600000" class="hidden">1h
+                    </label>
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight" data-value="86400000">
+                        <input type="radio" name="timeLimit" value="86400000" class="hidden">1d
+                    </label>
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight selected" data-value="259200000">
+                        <input type="radio" name="timeLimit" value="259200000" checked class="hidden">3d
+                    </label>
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight" data-value="432000000">
+                        <input type="radio" name="timeLimit" value="432000000" class="hidden">5d
+                    </label>
+                    <label class="time-option flex-1 text-center px-1 py-1.5 border-2 rounded-lg cursor-pointer transition-all text-[10px] font-medium leading-tight" data-value="864000000">
+                        <input type="radio" name="timeLimit" value="864000000" class="hidden">10d
+                    </label>
+                </div>
+            </div>
+            
             <div class="flex gap-2">
                 <button id="saveTopicBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Create</button>
                 <button class="close-modal flex-1 bg-gray-200 text-gray-700 py-2 rounded-lg font-semibold text-sm">Cancel</button>
@@ -132,7 +177,7 @@
                 <h2 class="text-xl font-bold text-gray-800" id="entryModalTitle">New Entry</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="entryTitle" placeholder="Title / Short description..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
+            <textarea id="entryTitle" placeholder="Title / Short description..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm resize-none"></textarea>
             <textarea id="entryQuestion" placeholder="Question / Detail..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
             <div class="flex gap-2">
                 <button id="saveEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Add</button>
@@ -183,7 +228,7 @@
                 <h2 class="text-xl font-bold text-gray-800">Edit Entry</h2>
                 <button class="close-modal text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
             </div>
-            <input type="text" id="editEntryTitle" placeholder="Title..." class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm">
+            <textarea id="editEntryTitle" placeholder="Title..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-2 text-sm resize-none"></textarea>
             <textarea id="editEntryQuestion" placeholder="Question..." rows="2" class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors mb-3 text-sm"></textarea>
             <div class="flex gap-2">
                 <button id="saveEditEntryBtn" class="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white py-2 rounded-lg font-semibold text-sm">Save</button>

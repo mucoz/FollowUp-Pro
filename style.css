@@ -59,22 +59,20 @@ body {
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
 }
 
+/* Topic content slide animation */
+.topic-content-wrapper {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.topic-content-wrapper.expanded {
+    max-height: 5000px;
+}
+
 /* Entry iç içe geçme stilleri - Daha kompakt */
 .entry-item {
     border-left: 2px solid rgba(59, 130, 246, 0.3);
     transition: all 0.2s ease;
-    animation: slideIn 0.2s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateX(-5px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
 }
 
 .entry-item:hover {
@@ -255,10 +253,71 @@ body {
     }
 }
 
+/* Search highlight */
+.search-highlight {
+    background: #FDE047;
+    color: #1f2937;
+    border-radius: 2px;
+    padding: 0 1px;
+    box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.5);
+}
+
 /* Search bar focus glow */
 #searchInput:focus {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3), 0 0 16px 4px rgba(59, 130, 246, 0.15);
     border-color: #3B82F6;
+}
+
+/* Entry done state - stamp effect */
+.entry-done {
+    position: relative;
+    overflow: hidden;
+}
+.entry-done > .backdrop-blur::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.35);
+    pointer-events: none;
+    border-radius: inherit;
+}
+.entry-done > .backdrop-blur .entry-content-text {
+    opacity: 0.5;
+    text-decoration: line-through;
+    text-decoration-color: rgba(0, 0, 0, 0.3);
+}
+.entry-done .entry-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: rgba(220, 38, 38, 0.45);
+    border: 4px solid rgba(220, 38, 38, 0.4);
+    padding: 0.2rem 1rem;
+    border-radius: 8px;
+    pointer-events: none;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    z-index: 1;
+}
+.entry-done .entry-stamp.animate {
+    animation: stampIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes stampIn {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(-25deg) scale(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) rotate(-10deg) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) rotate(-15deg) scale(1);
+    }
 }
 
 /* Entry collapse smooth animation */
@@ -377,6 +436,83 @@ body {
 .picker-arrow:hover {
     background: #e5e7eb;
     color: #6b7280;
+}
+
+/* Type & Time option styling */
+.type-option {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+    color: #6b7280;
+}
+.type-option.selected {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+    color: #2563EB;
+}
+.type-option input[type="radio"]:checked + i,
+.type-option input[type="radio"]:checked ~ .fa-bolt,
+.type-option input[type="radio"]:checked ~ .fa-thumbtack,
+.type-option input[type="radio"]:checked ~ .fa-book {
+    /* handled by parent class */
+}
+
+.time-option {
+    border-color: #e5e7eb;
+    background: #f9fafb;
+    color: #6b7280;
+}
+.time-option.selected {
+    border-color: #8B5CF6;
+    background: #F5F3FF;
+    color: #7C3AED;
+}
+
+/* Topic type badges */
+.topic-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+.topic-type-badge.action {
+    background: rgba(59, 130, 246, 0.3);
+    color: #BFDBFE;
+}
+.topic-type-badge.pinned {
+    background: rgba(251, 191, 36, 0.3);
+    color: #FDE68A;
+}
+.topic-type-badge.tutorial {
+    background: rgba(52, 211, 153, 0.3);
+    color: #A7F3D0;
+}
+
+/* Compact time badge & progress strip */
+.time-badge {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+}
+.time-badge.urgent {
+    background: rgba(239, 68, 68, 0.25);
+    color: #FCA5A5;
+}
+
+.countdown-strip {
+    height: 2px;
+    background: linear-gradient(90deg, #34D399, #10B981);
+    border-radius: 0;
+    transition: width 1s linear;
+}
+.countdown-strip.warn {
+    background: linear-gradient(90deg, #FBBF24, #F59E0B);
+}
+.countdown-strip.danger {
+    background: linear-gradient(90deg, #F87171, #EF4444);
 }
 
 /* Smooth background theme transition */

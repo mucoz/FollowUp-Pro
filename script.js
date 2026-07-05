@@ -12,6 +12,7 @@ let userLevel = 1;
 
 // Expand/Collapse state per entry
 const collapsedEntries = new Set();
+const expandedTexts = new Set();
 let expandedTopicId = null;
 
 // =============== YARDIMCI FONKSİYONLAR ===============
@@ -34,6 +35,7 @@ class FollowUpAlgorithm {
     }
     
     static countEntries(entries) {
+        if (!entries || !Array.isArray(entries)) return 0;
         let count = entries.length;
         for (let entry of entries) {
             if (entry.children) {
@@ -44,7 +46,7 @@ class FollowUpAlgorithm {
     }
     
     static calculateAverageDepth(entries, currentDepth = 1) {
-        if (entries.length === 0) return 0;
+        if (!entries || !Array.isArray(entries) || entries.length === 0) return 0;
         let totalDepth = 0;
         let count = 0;
         
@@ -88,12 +90,12 @@ class XPSystem {
         return userLevel;
     }
     
-    static getXPReward(action) {
+    static getXPReward(action, topicEntryCount = 0) {
         const rewards = {
-            'topic_created': 50,
+            'topic_created': 0,
             'entry_added': 25,
             'entry_deleted': -10,
-            'topic_completed': 100,
+            'topic_completed': topicEntryCount === 0 ? 5 : 100,
             'topic_reactivated': 50
         };
         return rewards[action] || 10;
@@ -445,17 +447,19 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
         const hasChildren = entry.children && entry.children.length > 0;
         const isCollapsed = collapsedEntries.has(entry.id);
         
+        const isDone = entry.done;
         return `
-        <div class="entry-item ml-${Math.min(level * 3, 8)} relative pl-3 py-1">
-            <div class="backdrop-blur rounded-lg p-2 mb-1 shadow-sm" style="${bgStyle}">
+        <div class="entry-item ml-${Math.min(level * 3, 8)} relative pl-3 py-1 ${isDone ? 'entry-done' : ''}" data-entry-id="${entry.id}">
+            <div class="backdrop-blur rounded-lg p-2 mb-1 shadow-sm relative overflow-hidden" style="${bgStyle}">
+                ${isDone ? '<div class="entry-stamp">DONE</div>' : ''}
                 <div class="flex justify-between items-start">
                     <div class="flex items-start flex-1 min-w-0">
                         <button onclick="toggleEntryCollapse('${entry.id}')" data-entry-id="${entry.id}" class="mt-0.5 mr-1 text-gray-500 hover:text-gray-700 transition flex-shrink-0 ${hasChildren ? '' : 'invisible'}">
                             <i class="fas fa-chevron-right text-[10px] transition-transform duration-200 ${isCollapsed ? '' : 'rotate-90'}"></i>
                         </button>
                         <div class="min-w-0">
-                            <h4 class="text-gray-800 text-xs font-medium truncate">${escapeHtml(entry.title)}</h4>
-                            <p class="font-semibold text-red-600 text-xs mt-0.5 truncate">${escapeHtml(entry.question)}</p>
+                            <h4 class="entry-content-text text-gray-800 text-xs font-medium">${renderTextWithToggle(entry.title, entry.id + '-title')}</h4>
+                            <p class="entry-content-text font-semibold text-red-600 text-xs mt-0.5">${renderTextWithToggle(entry.question, entry.id + '-question')}</p>
                             <div class="text-[10px] text-gray-400 mt-1">
                                 <i class="far fa-clock"></i> ${new Date(entry.createdAt).toLocaleDateString()} ${new Date(entry.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
                             </div>
@@ -463,6 +467,9 @@ function renderEntries(entries, level = 0, topicId, parentId = null, isReadOnly 
                     </div>
                     ${!isReadOnly ? `
                         <div class="flex gap-1 ml-2 flex-shrink-0">
+                            <button onclick="toggleEntryDone('${topicId}', '${entry.id}', '${parentId || ''}')" class="${isDone ? 'text-green-500' : 'text-gray-500'} hover:text-green-700 transition text-xs" title="Toggle Done">
+                                <i class="fas ${isDone ? 'fa-check-circle' : 'fa-circle'}"></i>
+                            </button>
                             <button onclick="openEditEntryModal('${topicId}', '${entry.id}', '${parentId || ''}')" class="text-blue-500 hover:text-blue-700 transition text-xs">
                                 <i class="fas fa-edit"></i>
                             </button>
@@ -518,6 +525,17 @@ function renderTopics() {
     
     const rankedTopics = [...filteredTopics].sort((a, b) => {
         if (currentTab === 'active') {
+            const typeOrder = { pinned: 0, action: 1, tutorial: 2 };
+            const typeDiff = (typeOrder[a.type] || 1) - (typeOrder[b.type] || 1);
+            if (typeDiff !== 0) return typeDiff;
+            
+            if (a.type === 'pinned' || b.type === 'pinned') {
+                return b.createdAt - a.createdAt;
+            }
+            if (a.type === 'tutorial' || b.type === 'tutorial') {
+                return a.createdAt - b.createdAt;
+            }
+            
             const rankA = FollowUpAlgorithm.calculateRank(a);
             const rankB = FollowUpAlgorithm.calculateRank(b);
             return rankB - rankA;
@@ -549,14 +567,43 @@ function renderTopics() {
         return;
     }
     
-    container.innerHTML = rankedTopics.map(topic => `
+    container.innerHTML = rankedTopics.map(topic => {
+        const typeBadge = topic.type === 'pinned'
+            ? '<span class="topic-type-badge pinned"><i class="fas fa-thumbtack"></i> Pinned</span>'
+            : topic.type === 'tutorial'
+            ? '<span class="topic-type-badge tutorial"><i class="fas fa-book"></i> Tutorial</span>'
+            : '<span class="topic-type-badge action"><i class="fas fa-bolt"></i> Action</span>';
+        
+        let countdownHtml = '';
+        let countdownStrip = '';
+        if (!topic.completed && topic.type === 'action' && topic.timeLimit) {
+            const elapsed = Date.now() - topic.createdAt;
+            const remaining = Math.max(0, topic.timeLimit - elapsed);
+            const progress = Math.min(100, (elapsed / topic.timeLimit) * 100);
+            const barClass = progress > 90 ? 'danger' : progress > 70 ? 'warn' : 'safe';
+            const timeStr = formatRemainingTime(remaining);
+            const isUrgent = remaining < 3600000;
+            countdownHtml = `
+                <span class="time-badge px-1.5 py-0.5 rounded-full text-[10px] ${isUrgent ? 'urgent' : ''}" data-topic-id="${topic.id}">
+                    ⏱ <span class="time-badge-text">${timeStr}</span>
+                </span>
+            `;
+            countdownStrip = `
+                <div class="countdown-strip ${barClass}" style="width: ${progress}%" data-topic-id="${topic.id}"></div>
+            `;
+        }
+        
+        return `
         <div class="topic-card ios-card bg-white/10 backdrop-blur-lg rounded-xl overflow-hidden border border-white/20">
+            ${countdownStrip}
             <!-- Topic Header - Daha kompakt -->
             <div class="p-3 cursor-pointer" onclick="toggleTopic('${topic.id}')">
                 <div class="flex justify-between items-start">
                     <div class="flex-1">
                         <div class="flex items-center gap-2 flex-wrap mb-1">
-                            <h2 class="text-base font-bold text-white">${escapeHtml(topic.title)}</h2>
+                            <h2 class="text-base font-bold text-white">${highlightText(topic.title, searchQuery)}</h2>
+                            ${typeBadge}
+                            ${countdownHtml}
                             <span class="px-1.5 py-0.5 bg-blue-500/30 text-blue-200 rounded-full text-[10px]">
                                 📊 ${FollowUpAlgorithm.countEntries(topic.entries)} entry
                             </span>
@@ -570,7 +617,7 @@ function renderTopics() {
                                 </span>
                             `}
                         </div>
-                        ${topic.description ? `<p class="text-white/70 text-xs">${escapeHtml(topic.description)}</p>` : ''}
+                        ${topic.description ? `<p class="text-white/70 text-xs">${highlightText(topic.description, searchQuery)}</p>` : ''}
                     </div>
                     <div class="flex gap-1 ml-2">
                         ${!isReadOnly ? `
@@ -587,7 +634,8 @@ function renderTopics() {
             </div>
             
             <!-- Topic Content (Expandable) - Daha kompakt -->
-            <div id="topic-${topic.id}" class="hidden px-3 pb-3">
+            <div id="topic-${topic.id}" class="topic-content-wrapper">
+                <div class="topic-content-inner px-3 pb-3">
                 ${topic.entries && topic.entries.length > 0 ? renderEntries(topic.entries, 0, topic.id, null, isReadOnly) : `
 <div class="text-center py-4 text-white/50 text-sm">
                             <i class="fas fa-comment-dots text-2xl mb-1"></i>
@@ -603,7 +651,7 @@ function renderTopics() {
                     
                     <button onclick="completeTopic('${topic.id}')" class="mt-1 w-full bg-green-500/80 hover:bg-green-500 text-white py-2 rounded-lg font-semibold transition flex items-center justify-center gap-1 text-sm">
                         <i class="fas fa-check-circle text-xs"></i>
-                        Complete Topic (+100 XP)
+                        Complete Topic
                     </button>
                 ` : topic.reactivateUsed ? `
                     <div class="mt-2 w-full bg-white/5 rounded-lg px-3 py-2.5 text-center">
@@ -615,16 +663,17 @@ function renderTopics() {
                         Reactivate (+50 XP)
                     </button>
                 `}
+                </div>
             </div>
         </div>
-    `).join('');
+    `}).join('');
 
     // Re-expand previously expanded topic after re-render
     if (expandedTopicId) {
         const content = document.getElementById(`topic-${expandedTopicId}`);
         const chevron = document.getElementById(`chevron-${expandedTopicId}`);
         if (content) {
-            content.classList.remove('hidden');
+            content.classList.add('expanded');
             if (chevron) chevron.style.transform = 'rotate(180deg)';
         }
     }
@@ -634,18 +683,20 @@ function renderTopics() {
 function scrollToTopicBottom(topicId) {
     setTimeout(() => {
         const topicElement = document.getElementById(`topic-${topicId}`);
-        if (topicElement && !topicElement.classList.contains('hidden')) {
+        if (topicElement && topicElement.classList.contains('expanded')) {
             topicElement.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
     }, 100);
 }
 
 // =============== CRUD İŞLEMLERİ ===============
-function createTopic(title, description) {
+function createTopic(title, description, type = 'action', timeLimit = 259200000) {
     const newTopic = {
         id: Date.now().toString(),
         title: title,
         description: description,
+        type: type,
+        timeLimit: type === 'action' ? timeLimit : null,
         entries: [],
         createdAt: Date.now(),
         lastActivity: Date.now(),
@@ -654,10 +705,9 @@ function createTopic(title, description) {
         reactivateUsed: false
     };
     topics.push(newTopic);
-    XPSystem.addXP(XPSystem.getXPReward('topic_created'), 'topic_created');
     saveToLocal();
     renderTopics();
-    showNotification(`Topic "${truncate(title)}" created! +50 XP`, 'success');
+    showNotification(`Topic "${truncate(title)}" created!`, 'success');
 }
 
 function addEntry(topicId, title, question, parentId = null) {
@@ -669,6 +719,7 @@ function addEntry(topicId, title, question, parentId = null) {
         title: title,
         question: question,
         createdAt: Date.now(),
+        done: false,
         children: []
     };
     
@@ -695,7 +746,7 @@ function addEntry(topicId, title, question, parentId = null) {
     
     // Expand the topic to show new entry
     const topicContent = document.getElementById(`topic-${topicId}`);
-    if (topicContent && topicContent.classList.contains('hidden')) {
+    if (topicContent && !topicContent.classList.contains('expanded')) {
         toggleTopic(topicId);
     }
     scrollToTopicBottom(topicId);
@@ -706,15 +757,14 @@ function addEntry(topicId, title, question, parentId = null) {
 function completeTopic(topicId) {
     const topic = topics.find(t => t.id === topicId);
     if (topic && !topic.completed) {
-        const oldLevel = userLevel;
+        const entryCount = FollowUpAlgorithm.countEntries(topic.entries);
+        const xpReward = XPSystem.getXPReward('topic_completed', entryCount);
         topic.completed = true;
         topic.completedAt = Date.now();
-        XPSystem.addXP(XPSystem.getXPReward('topic_completed'), 'topic_completed');
+        XPSystem.addXP(xpReward, 'topic_completed');
         showConfetti();
-        if (userLevel === oldLevel) {
-            showCelebrationText('Completed!', 'complete');
-        }
-        showNotification(`🎉 Topic "${truncate(topic.title)}" completed! +100 XP 🎉`, 'success');
+        showCelebrationText('Completed!', 'complete');
+        showNotification(`🎉 Topic "${truncate(topic.title)}" completed! +${xpReward} XP 🎉`, 'success');
         saveToLocal();
         renderTopics();
     }
@@ -854,23 +904,24 @@ function toggleEntryCollapse(entryId) {
 function toggleTopic(topicId) {
     const content = document.getElementById(`topic-${topicId}`);
     const chevron = document.getElementById(`chevron-${topicId}`);
-    const isOpening = content.classList.contains('hidden');
+    const isOpening = !content.classList.contains('expanded');
 
+    // Close other expanded topics
     document.querySelectorAll('[id^="topic-"]').forEach(el => {
-        if (el.id !== `topic-${topicId}` && !el.classList.contains('hidden')) {
-            el.classList.add('hidden');
+        if (el.id !== `topic-${topicId}` && el.classList.contains('expanded')) {
+            el.classList.remove('expanded');
             const otherChevron = document.getElementById(`chevron-${el.id.replace('topic-', '')}`);
             if (otherChevron) otherChevron.style.transform = 'rotate(0deg)';
         }
     });
 
     if (isOpening) {
-        content.classList.remove('hidden');
+        content.classList.add('expanded');
         chevron.style.transform = 'rotate(180deg)';
         expandedTopicId = topicId;
         scrollToTopicBottom(topicId);
     } else {
-        content.classList.add('hidden');
+        content.classList.remove('expanded');
         chevron.style.transform = 'rotate(0deg)';
         expandedTopicId = null;
     }
@@ -883,7 +934,7 @@ function openEntryModal(topicId, parentId = null) {
         return;
     }
     
-    document.getElementById('entryModalTitle').textContent = `New Entry: ${escapeHtml(topic.title)}`;
+    document.getElementById('entryModalTitle').textContent = parentId ? `New Follow Up: ${escapeHtml(topic.title)}` : `New Entry: ${escapeHtml(topic.title)}`;
     document.getElementById('currentTopicId').value = topicId;
     document.getElementById('currentParentId').value = parentId || '';
     document.getElementById('entryTitle').value = '';
@@ -921,6 +972,41 @@ function deleteEntry(topicId, entryId, parentId) {
     openModal('confirmModal');
 }
 
+function toggleEntryDone(topicId, entryId, parentId) {
+    const topic = topics.find(t => t.id === topicId);
+    if (!topic || topic.completed) return;
+    
+    const entry = findEntryById(topic.entries, entryId);
+    if (!entry) return;
+    
+    entry.done = !entry.done;
+    const wasSetDone = entry.done;
+    // Recursively toggle all children to match parent
+    function toggleChildren(entries, done) {
+        for (const e of entries) {
+            e.done = done;
+            if (e.children && e.children.length > 0) {
+                toggleChildren(e.children, done);
+            }
+        }
+    }
+    if (entry.children && entry.children.length > 0) {
+        toggleChildren(entry.children, entry.done);
+    }
+    saveToLocal();
+    renderTopics();
+    // Animate stamp only on the freshly toggled entry
+    if (wasSetDone) {
+        const stamp = document.querySelector(`[data-entry-id="${entryId}"] .entry-stamp`);
+        if (stamp) {
+            stamp.classList.add('animate');
+            stamp.addEventListener('animationend', () => {
+                stamp.classList.remove('animate');
+            }, { once: true });
+        }
+    }
+}
+
 // =============== STORAGE ===============
 function saveToLocal() {
     const data = {
@@ -937,12 +1023,67 @@ function loadFromLocal() {
     if (saved) {
         const data = JSON.parse(saved);
         topics = data.topics || [];
+        // Migration: patch old topics missing required fields
+        for (const topic of topics) {
+            if (!topic.entries) topic.entries = [];
+            if (!topic.type) topic.type = 'action';
+            if (topic.type !== 'action') topic.timeLimit = null;
+            if (topic.timeLimit === undefined) topic.timeLimit = topic.type === 'action' ? 259200000 : null;
+        }
         nextId = data.nextId || 1;
         userXP = data.userXP || 0;
         userLevel = data.userLevel || 1;
     }
     renderTopics();
     updateXPDisplay();
+}
+
+function formatRemainingTime(ms) {
+    if (ms <= 0) return 'Time is up!';
+    const totalSeconds = Math.floor(ms / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+    if (minutes > 0) return `${minutes}m ${seconds}s`;
+    return `${seconds}s`;
+}
+
+let countdownTimerId = null;
+
+function updateCountdowns() {
+    const activeTopics = topics.filter(t => !t.completed && t.type === 'action' && t.timeLimit);
+    for (const topic of activeTopics) {
+        const elapsed = Date.now() - topic.createdAt;
+        const remaining = Math.max(0, topic.timeLimit - elapsed);
+        const progress = Math.min(100, (elapsed / topic.timeLimit) * 100);
+        const barClass = progress > 90 ? 'danger' : progress > 70 ? 'warn' : 'safe';
+        const timeStr = formatRemainingTime(remaining);
+        const isUrgent = remaining < 3600000;
+
+        const strip = document.querySelector(`.countdown-strip[data-topic-id="${topic.id}"]`);
+        const badge = document.querySelector(`.time-badge[data-topic-id="${topic.id}"]`);
+        if (strip) {
+            strip.style.width = `${progress}%`;
+            strip.className = `countdown-strip ${barClass}`;
+        }
+        if (badge) {
+            badge.className = `time-badge px-1.5 py-0.5 rounded-full text-[10px]${isUrgent ? ' urgent' : ''}`;
+            badge.innerHTML = `⏱ <span class="time-badge-text">${timeStr}</span>`;
+        }
+    }
+}
+
+function startCountdownTimer() {
+    if (countdownTimerId) return;
+    countdownTimerId = setInterval(() => {
+        const activeTopics = topics.filter(t => !t.completed && t.type === 'action' && t.timeLimit);
+        if (activeTopics.length === 0) return;
+        updateCountdowns();
+    }, 1000);
 }
 
 function truncate(str, max = 50) {
@@ -1048,6 +1189,26 @@ function importBackup(file) {
     reader.readAsText(file);
 }
 
+function renderTextWithToggle(text, id, maxLen = 60) {
+    if (!text) return '';
+    const escaped = highlightText(text, searchQuery);
+    if (text.length <= maxLen) return escaped;
+    const key = `show-${id}`;
+    const isExpanded = expandedTexts.has(key);
+    return isExpanded
+        ? `${escaped} <button onclick="toggleTextExpand('${key}')" class="text-blue-400 hover:text-blue-300 transition text-[10px] font-semibold">Show less</button>`
+        : `${highlightText(text.slice(0, maxLen), searchQuery)}... <button onclick="toggleTextExpand('${key}')" class="text-blue-400 hover:text-blue-300 transition text-[10px] font-semibold">Show more</button>`;
+}
+
+function toggleTextExpand(key) {
+    if (expandedTexts.has(key)) {
+        expandedTexts.delete(key);
+    } else {
+        expandedTexts.add(key);
+    }
+    renderTopics();
+}
+
 function escapeHtml(str) {
     if (!str) return '';
     return str.replace(/[&<>]/g, function(m) {
@@ -1056,6 +1217,15 @@ function escapeHtml(str) {
         if (m === '>') return '&gt;';
         return m;
     });
+}
+
+function highlightText(str, query) {
+    if (!str) return '';
+    const escaped = escapeHtml(str).replace(/\n/g, '<br>');
+    if (!query) return escaped;
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return escaped.replace(regex, '<span class="search-highlight">$1</span>');
 }
 
 // =============== MODAL KEYBOARD NAVIGATION ===============
@@ -1181,16 +1351,16 @@ function initNewEntryModal() {
     });
     observer.observe(modal, { attributes: true });
     
-    // Enter ile navigation
-    titleInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
+    // Enter ile navigation, Shift+Enter ile yeni satır
+    titleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (questionInput) questionInput.focus();
         }
     });
     
     if (questionInput) {
-        questionInput.addEventListener('keypress', (e) => {
+        questionInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 if (saveBtn) saveBtn.click();
@@ -1750,7 +1920,37 @@ document.addEventListener('DOMContentLoaded', () => {
     });
             
     // Event Listeners
-    document.getElementById('newTopicBtn').addEventListener('click', () => openModal('topicModal'));
+    document.getElementById('newTopicBtn').addEventListener('click', () => {
+        // Reset type selection to default Action
+        document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+        document.querySelector('.type-option[data-type="action"]').classList.add('selected');
+        document.querySelector('input[name="topicType"][value="action"]').checked = true;
+        document.querySelectorAll('.time-option').forEach(el => el.classList.remove('selected'));
+        document.querySelector('.time-option[data-value="259200000"]').classList.add('selected');
+        document.querySelector('input[name="timeLimit"][value="259200000"]').checked = true;
+        document.getElementById('timeLimitGroup').style.display = '';
+        openModal('topicModal');
+    });
+    
+    // Type selection
+    document.querySelectorAll('.type-option').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.type-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            this.querySelector('input[type="radio"]').checked = true;
+            const type = this.dataset.type;
+            document.getElementById('timeLimitGroup').style.display = type === 'action' ? '' : 'none';
+        });
+    });
+    
+    // Time limit selection
+    document.querySelectorAll('.time-option').forEach(el => {
+        el.addEventListener('click', function() {
+            document.querySelectorAll('.time-option').forEach(o => o.classList.remove('selected'));
+            this.classList.add('selected');
+            this.querySelector('input[type="radio"]').checked = true;
+        });
+    });
     
     document.getElementById('exportBtn').addEventListener('click', exportBackup);
     
@@ -1804,11 +2004,23 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('saveTopicBtn').addEventListener('click', () => {
         const title = document.getElementById('topicTitle').value.trim();
         const desc = document.getElementById('topicDesc').value.trim();
+        const typeEl = document.querySelector('input[name="topicType"]:checked');
+        const type = typeEl ? typeEl.value : 'action';
+        const timeLimitEl = document.querySelector('input[name="timeLimit"]:checked');
+        const timeLimit = timeLimitEl ? parseInt(timeLimitEl.value) : 259200000;
         if (title) {
-            createTopic(title, desc);
+            createTopic(title, desc, type, timeLimit);
             closeModal('topicModal');
             document.getElementById('topicTitle').value = '';
             document.getElementById('topicDesc').value = '';
+            // Reset type to default Action
+            document.querySelectorAll('.type-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector('.type-option[data-type="action"]').classList.add('selected');
+            document.querySelector('input[name="topicType"][value="action"]').checked = true;
+            document.querySelectorAll('.time-option').forEach(el => el.classList.remove('selected'));
+            document.querySelector('.time-option[data-value="259200000"]').classList.add('selected');
+            document.querySelector('input[name="timeLimit"][value="259200000"]').checked = true;
+            document.getElementById('timeLimitGroup').style.display = '';
         } else {
             showNotification('Please enter a title!', 'info');
         }
@@ -1961,4 +2173,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initAllModals();
     addFocusStyles();
+    startCountdownTimer();
 });
